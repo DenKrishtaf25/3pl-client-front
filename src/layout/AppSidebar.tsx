@@ -15,9 +15,9 @@ import {
   PieChartIcon,
   PlugInIcon,
   TableIcon,
-  UserCircleIcon,
+  // UserCircleIcon,
 } from "../icons/index";
-import SidebarWidget from "./SidebarWidget";
+// import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -29,68 +29,143 @@ type NavItem = {
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
-    name: "Dashboard",
-    subItems: [{ name: "Ecommerce2", path: "/", pro: false }],
+    name: "Товарный запас",
+    path: "/stock",
   },
   {
     icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
+    name: "Инвентаризация",
+    path: "/inventory",
   },
   {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
+    icon: <ListIcon />,
+    name: "Транспорт",
+    path: "/transport",
+  },
+  {
+    icon: <TableIcon />,
+    name: "Заказы",
+    path: "/orders",
+  },
+  {
+    icon: <PageIcon />,
+    name: "Отчеты и аналитика",
+    path: "/",
+  },
+  {
+    icon: <PieChartIcon />,
+    name: "Уровень сервиса",
+    path: "/",
   },
 
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-  },
+
+  // {
+  //   icon: <GridIcon />,
+  //   name: "Dashboard",
+  //   subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+  // },
+  // {
+  //   icon: <CalenderIcon />,
+  //   name: "Calendar",
+  //   path: "/calendar",
+  // },
+  // {
+  //   icon: <UserCircleIcon />,
+  //   name: "User Profile",
+  //   path: "/profile",
+  // },
+  //
+  // {
+  //   name: "Forms",
+  //   icon: <ListIcon />,
+  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
+  // },
+  // {
+  //   name: "Tables",
+  //   icon: <TableIcon />,
+  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
+  // },
+  // {
+  //   name: "Pages",
+  //   icon: <PageIcon />,
+  //   subItems: [
+  //     { name: "Blank Page", path: "/blank", pro: false },
+  //     { name: "404 Error", path: "/error-404", pro: false },
+  //   ],
+  // },
 ];
 
 const othersItems: NavItem[] = [
   {
     icon: <PieChartIcon />,
-    name: "Charts",
-    subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
+    name: "Вопросы и предложения",
+    path: "/",
   },
   {
     icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
+    name: "Претензионная деятельность",
+    path: "/",
   },
   {
     icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
-    ],
+    name: "Дополнительные услуги",
+    path: "/",
+  },
+  {
+    icon: <CalenderIcon />,
+    name: "Документы",
+    path: "/",
+  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Charts",
+  //   subItems: [
+  //     { name: "Line Chart", path: "/line-chart", pro: false },
+  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elements",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alerts", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/badge", pro: false },
+  //     { name: "Buttons", path: "/buttons", pro: false },
+  //     { name: "Images", path: "/images", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Authentication",
+  //   subItems: [
+  //     { name: "Sign In", path: "/signin", pro: false },
+  //     { name: "Sign Up", path: "/signup", pro: false },
+  //   ],
+  // },
+];
+
+const referenceItems: NavItem[] = [
+  {
+    icon: <CalenderIcon />,
+    name: "ПЭК",
+    path: "/",
+  },
+  {
+    icon: <PlugInIcon />,
+    name: "Склады",
+    path: "/",
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "Цены и услуги",
+    path: "/",
+  },
+  {
+    icon: <PieChartIcon />,
+    name: "Контактная информация",
+    path: "/",
   },
 ];
 
@@ -100,7 +175,7 @@ const AppSidebar: React.FC = () => {
 
   const renderMenuItems = (
     navItems: NavItem[],
-    menuType: "main" | "others"
+    menuType: "main" | "others" | "others2"
   ) => (
     <ul className="flex flex-col gap-4">
       {navItems.map((nav, index) => (
@@ -225,7 +300,7 @@ const AppSidebar: React.FC = () => {
   );
 
   const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others";
+    type: "main" | "others" | "others2";
     index: number;
   } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
@@ -239,14 +314,14 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
+    ["main", "others", "others2"].forEach((menuType) => {
       const items = menuType === "main" ? navItems : othersItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
             if (isActive(subItem.path)) {
               setOpenSubmenu({
-                type: menuType as "main" | "others",
+                type: menuType as "main" | "others" | "others2",
                 index,
               });
               submenuMatched = true;
@@ -275,7 +350,7 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
-  const handleSubmenuToggle = (index: number, menuType: "main" | "others") => {
+  const handleSubmenuToggle = (index: number, menuType: "main" | "others" | "others2") => {
     setOpenSubmenu((prevOpenSubmenu) => {
       if (
         prevOpenSubmenu &&
@@ -348,15 +423,15 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
+                  "Операции"
                 ) : (
-                  <HorizontaLDots />
+                  <HorizontaLDots/>
                 )}
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
 
-            <div className="">
+            <div>
               <h2
                 className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
                   !isExpanded && !isHovered
@@ -365,16 +440,33 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  "Сервисы"
                 ) : (
-                  <HorizontaLDots />
+                  <HorizontaLDots/>
                 )}
               </h2>
               {renderMenuItems(othersItems, "others")}
             </div>
+
+            <div>
+              <h2
+                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "justify-start"
+                }`}
+              >
+                {isExpanded || isHovered || isMobileOpen ? (
+                  "Справка"
+                ) : (
+                  <HorizontaLDots/>
+                )}
+              </h2>
+              {renderMenuItems(referenceItems, "others2")}
+            </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
+        {/*{isExpanded || isHovered || isMobileOpen ? <SidebarWidget/> : null}*/}
       </div>
     </aside>
   );
