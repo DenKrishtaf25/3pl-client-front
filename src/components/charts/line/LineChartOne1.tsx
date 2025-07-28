@@ -16,7 +16,7 @@ export default function LineChartOne1() {
       position: "top",
       horizontalAlign: "left",
     },
-    colors: ["#465FFF", "#9CB9FF"], // Define line colors
+    colors: ["#465FFF", "#1bcfc6", "#9CB9FF"], // Define line colors
     chart: {
       fontFamily: "Outfit, sans-serif",
       height: 310,
@@ -112,6 +112,10 @@ export default function LineChartOne1() {
     {
       name: "По плану",
       data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
+    },
+    {
+      name: "По плану",
+      data: [120, 100, 140, 120, 190, 185, 220, 185, 260, 225, 290, 265],
     },
     {
       name: "По факту",
