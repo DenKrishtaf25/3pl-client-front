@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
   {
     icon: <PageIcon />,
     name: "Отчеты и аналитика",
-    path: "/",
+    path: "/analytics",
   },
   {
     icon: <PieChartIcon />,
