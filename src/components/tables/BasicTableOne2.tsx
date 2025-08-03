@@ -1,4 +1,10 @@
-import React from "react";
+"use client";
+import React, { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ru } from "date-fns/locale";
+import { CalendarDays } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -61,8 +67,64 @@ const tableData: Order[] = [
 ];
 
 export default function BasicTableOne() {
+
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+
   return (
     <div className="space-y-4">
+
+
+      <div
+        className="flex flex-wrap gap-4 p-4 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50 dark:bg-white/[0.02]">
+        <div className="flex flex-col relative">
+          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата с</label>
+          <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            selectsStart
+            startDate={startDate}
+            endDate={endDate}
+            placeholderText="Выберите дату"
+            dateFormat="dd.MM.yyyy"
+            locale={ru}
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+
+        <div className="flex flex-col relative">
+          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата по</label>
+          <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            selectsStart
+            startDate={startDate}
+            endDate={endDate}
+            placeholderText="Выберите дату"
+            dateFormat="dd.MM.yyyy"
+            locale={ru}
+            className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+          />
+        </div>
+
+        <div className="flex items-end gap-2">
+          <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            Поиск
+          </button>
+          <button
+            className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+            onClick={() => {
+              setStartDate(null);
+              setEndDate(null);
+            }}
+          >
+            Очистить
+          </button>
+        </div>
+      </div>
+
 
       <input
         type="text"
