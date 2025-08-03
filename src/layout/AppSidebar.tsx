@@ -98,13 +98,16 @@ const navItems: NavItem[] = [
 const othersItems: NavItem[] = [
   {
     icon: <PieChartIcon />,
-    name: "Вопросы и предложения",
-    path: "/",
+    name: "Частые вопросы",
+    path: "/faq",
   },
   {
     icon: <BoxCubeIcon />,
     name: "Претензионная деятельность",
-    path: "/",
+    subItems: [
+        { name: "Претензия 1", path: "/line-chart", pro: false },
+        { name: "Претензия 2", path: "/bar-chart", pro: false },
+    ],
   },
   {
     icon: <PlugInIcon />,
