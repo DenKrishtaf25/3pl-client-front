@@ -52,13 +52,6 @@ const navItems: NavItem[] = [
     name: "Отчеты и аналитика",
     path: "/analytics",
   },
-  {
-    icon: <PieChartIcon />,
-    name: "Уровень сервиса",
-    path: "/",
-  },
-
-
   // {
   //   icon: <GridIcon />,
   //   name: "Dashboard",
