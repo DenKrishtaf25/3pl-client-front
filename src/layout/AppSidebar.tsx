@@ -96,10 +96,10 @@ const othersItems: NavItem[] = [
   },
   {
     icon: <BoxCubeIcon />,
-    name: "Претензионная деятельность",
+    name: "Претензии",
     subItems: [
-        { name: "Претензия 1", path: "/line-chart", pro: false },
-        { name: "Претензия 2", path: "/bar-chart", pro: false },
+        { name: "Финансовые претензии", path: "/finance", pro: false },
+        { name: "Рекламации", path: "/complaints", pro: false },
     ],
   },
   {

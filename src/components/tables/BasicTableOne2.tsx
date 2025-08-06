@@ -125,12 +125,6 @@ export default function BasicTableOne() {
         </div>
       </div>
 
-
-      <input
-        type="text"
-        placeholder="Поиск"
-        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm w-48 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-      />
       <div
         className="flex justify-between flex-wrap gap-4 p-4 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50 dark:bg-white/[0.02]">
         <input
