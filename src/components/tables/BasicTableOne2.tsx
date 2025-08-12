@@ -3,7 +3,12 @@ import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ru } from "date-fns/locale";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Plus, Search, Trash2, X } from "lucide-react";
+import { Modal } from "../../components/ui/modal";
+import Label from "../../components/form/Label";
+import Input from "../../components/form/input/InputField";
+import Button from "../../components/ui/button/Button";
+import { useModal } from "../../hooks/useModal";
 
 import {
   Table,
@@ -16,53 +21,84 @@ import {
 interface Order {
   id: number;
   warehouse: string;
-  nomenclature: string;
-  article: string;
-  budget: string;
-  number: string;
+  type: string;
+  orderNumber: number;
+  kisNumber: string;
+  unloadingDate: string;
+  status: string;
+  counterparty: string;
+  acceptanceDate: string;
+  shippingPlan: string;
+  packagingPlan: number;
+  packagingFact: number;
+  linePlan: number;
+  lineFact: number;
 }
 
-// Define the table data using the interface
 const tableData: Order[] = [
   {
     id: 1,
-    warehouse: "Екатеринбург",
-    nomenclature: "Коваленкоо К.А,",
-    article: "УТ000000000000018267",
-    budget: "3.9K",
-    number: "Н 853 ТВ 799",
+    warehouse: "Литвиново",
+    type: "Приход",
+    orderNumber: 10007,
+    kisNumber: "PR002456625DIS",
+    unloadingDate: "12.20.2025",
+    status: "Новая",
+    counterparty: "Яшин Алексей Валерьевич",
+    acceptanceDate: "12.20.2025",
+    shippingPlan: "12.20.2025 13:30",
+    packagingPlan: 123,
+    packagingFact: 3214,
+    linePlan: 3453,
+    lineFact: 58968,
   },
   {
     id: 2,
-    warehouse: "Москва",
-    nomenclature: "Коваленкоо К.А,",
-    article: "(СГ-6208) Ручка шариковая",
-    budget: "24.9K",
-    number: "Н 853 ТВ 799",
+    warehouse: "Литвиново",
+    type: "Приход",
+    orderNumber: 10007,
+    kisNumber: "PR002456625DIS",
+    unloadingDate: "12.20.2025",
+    status: "Новая",
+    counterparty: "Яшин Алексей Валерьевич",
+    acceptanceDate: "12.20.2025",
+    shippingPlan: "12.20.2025 13:30",
+    packagingPlan: 123,
+    packagingFact: 3214,
+    linePlan: 3453,
+    lineFact: 58968,
   },
   {
     id: 3,
-    warehouse: "Ярославль",
-    nomenclature: "Коваленкоо К.А.",
-    article: "(СГ-6343) Блокнот Стандар",
-    budget: "12.7K",
-    number: "Н 853 ТВ 799",
+    warehouse: "Литвиново",
+    type: "Приход",
+    orderNumber: 10007,
+    kisNumber: "PR002456625DIS",
+    unloadingDate: "12.20.2025",
+    status: "Новая",
+    counterparty: "Яшин Алексей Валерьевич",
+    acceptanceDate: "12.20.2025",
+    shippingPlan: "12.20.2025 13:30",
+    packagingPlan: 123,
+    packagingFact: 3214,
+    linePlan: 3453,
+    lineFact: 58968,
   },
   {
     id: 4,
-    warehouse: "Владимир",
-    nomenclature: "Макеев Алексей Григорьевич",
-    article: "ЕР-00003857",
-    budget: "2.8K",
-    number: "Н 853 ТВ 799",
-  },
-  {
-    id: 5,
-    warehouse: "Кастрома",
-    nomenclature: "Лапшин Евгений Александрович",
-    article: "ИН00303 - брак",
-    budget: "4.5K",
-    number: "Н 853 ТВ 799",
+    warehouse: "Литвиново",
+    type: "Приход",
+    orderNumber: 10007,
+    kisNumber: "PR002456625DIS",
+    unloadingDate: "12.20.2025",
+    status: "Новая",
+    counterparty: "Яшин Алексей Валерьевич",
+    acceptanceDate: "12.20.2025",
+    shippingPlan: "12.20.2025 13:30",
+    packagingPlan: 123,
+    packagingFact: 3214,
+    linePlan: 3453,
+    lineFact: 58968,
   },
 ];
 
@@ -71,58 +107,148 @@ export default function BasicTableOne() {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
+  const { isOpen, openModal, closeModal } = useModal();
+  const handleSave = () => {
+    // Handle save logic here
+    console.log("Saving changes...");
+    closeModal();
+  };
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center border-b border-gray-100 dark:border-white/[0.05] bg-gray-50 dark:bg-white/[0.02] p-4">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col relative">
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата с</label>
+            <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              placeholderText="Выберите дату"
+              dateFormat="dd.MM.yyyy"
+              locale={ru}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
 
+          <div className="flex flex-col relative">
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата по</label>
+            <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              placeholderText="Выберите дату"
+              dateFormat="dd.MM.yyyy"
+              locale={ru}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
 
-      <div
-        className="flex flex-wrap gap-4 p-4 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50 dark:bg-white/[0.02]">
-        <div className="flex flex-col relative">
-          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата с</label>
-          <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            placeholderText="Выберите дату"
-            dateFormat="dd.MM.yyyy"
-            locale={ru}
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-          />
+          <div className="flex items-end gap-2">
+            <button className="flex gap-1 px-2 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              <Search size={20} />
+              Найти
+            </button>
+            <button
+              className="flex gap-1 px-2 py-2 text-sm bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+              onClick={() => {
+                setStartDate(null);
+                setEndDate(null);
+              }}
+            >
+              <X size={20} />
+              Очистить
+            </button>
+          </div>
         </div>
+        <button
+          onClick={openModal}
+          className="flex gap-1 px-2 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+        >
+          <Plus size={20} />
+          Создать заказ
+        </button>
 
-        <div className="flex flex-col relative">
-          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата по</label>
-          <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            placeholderText="Выберите дату"
-            dateFormat="dd.MM.yyyy"
-            locale={ru}
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-          />
-        </div>
+        <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
+          <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+            <div className="px-2 pr-14">
+              <h4 className="mb-6 text-2xl font-semibold text-gray-800 dark:text-white/90">
+                Создание заказа
+              </h4>
+            </div>
+            <form className="flex flex-col">
+              <div className="custom-scrollbar h-[450px] overflow-y-auto px-2 pb-3">
+                <div className="mt-7">
+                  <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                    Необходимые колонки
+                  </h5>
 
-        <div className="flex items-end gap-2">
-          <button className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
-            Поиск
-          </button>
-          <button
-            className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-            onClick={() => {
-              setStartDate(null);
-              setEndDate(null);
-            }}
-          >
-            Очистить
-          </button>
-        </div>
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Филиал</Label>
+                      <Input type="text" defaultValue="Литвиново" />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Тип заказа</Label>
+                      <Input type="text" defaultValue="Приход" />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Номер заказа</Label>
+                      <Input type="text" defaultValue="10007" />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Номер заказа КИС</Label>
+                      <Input type="text" defaultValue="+PR002456625DIS" />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Контрагент</Label>
+                      <Input type="text" defaultValue="10007" />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Упаковок план</Label>
+                      <Input type="text" defaultValue="105" />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Упаковок план</Label>
+                      <Input type="text" defaultValue="10007" />
+                    </div>
+
+                    <div className="col-span-2 lg:col-span-1">
+                      <Label>Строк план</Label>
+                      <Input type="text" defaultValue="105" />
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label>Строк факт</Label>
+                      <Input type="text" defaultValue="105" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+                <Button size="sm" variant="outline" onClick={closeModal}>
+                  Закрыть
+                </Button>
+                <Button className="flex gap-1" size="sm" onClick={handleSave}>
+                  <Plus size={20} />
+                  Создать
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Modal>
       </div>
 
       <div
@@ -158,8 +284,8 @@ export default function BasicTableOne() {
           <option value="ручная">Ручная</option>
           <option value="автомат">Автомат</option>
         </select>
-        <button
-          className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
+        <button className="flex gap-1 px-2 py-2 text-sm bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600">
+          <Trash2 size={18} />
           Сбросить
         </button>
       </div>
@@ -182,80 +308,73 @@ export default function BasicTableOne() {
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Тип прихода
+                    Тип заказа
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Номер заказа или маршрутного листа
+                    Номер заказа
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Номер ТС
+                    Номер КИС
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    ФИО водителя
+                    Дата выгрузки
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Тип обработки
+                    Статус
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Прибытия по заявке
+                    Контрагент
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    План прибытия
+                    Дата приемки
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Факт прибытия
+                    План откгрузки
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Убытия
+                    Упаковок план
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Тип прибытия
+                    Упаковок факт
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Часов опоздания
+                    Строк план
                   </TableCell>
                   <TableCell
                     isHeader
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
-                    Часов на территории
-                  </TableCell>
-
-                  <TableCell
-                    isHeader
-                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                  >
-                    Статутс ТС
+                    Строк факт
                   </TableCell>
                 </TableRow>
               </TableHeader>
@@ -270,55 +389,51 @@ export default function BasicTableOne() {
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                      {order.budget}
+                      {order.type}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.article}
+                      {order.orderNumber}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.number}
-                    </TableCell>
-
-                    <TableCell className="px-5 py-4 text-gray-500 sm:px-6 text-start text-theme-sm dark:text-gray-400">
-                      {order.nomenclature}
+                      {order.kisNumber}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.warehouse}
+                      {order.unloadingDate}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.warehouse}
+                      {order.status}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.warehouse}
+                      {order.counterparty}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.warehouse}
+                      {order.acceptanceDate}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.warehouse}
+                      {order.shippingPlan}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.warehouse}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                      {order.budget}
-                    </TableCell>
-
-                    <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                      {order.budget}
+                      {order.packagingPlan}
                     </TableCell>
 
                     <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                      {order.warehouse}
+                      {order.packagingFact}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {order.linePlan}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {order.lineFact}
                     </TableCell>
 
                   </TableRow>
