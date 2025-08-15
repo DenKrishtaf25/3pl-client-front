@@ -5,18 +5,26 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  BoxCubeIcon,
-  CalenderIcon,
   ChevronDownIcon,
-  GridIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
-  PieChartIcon,
-  PlugInIcon,
-  TableIcon,
-  // UserCircleIcon,
 } from "../icons/index";
+
+import {
+  Package,
+  ClipboardCheck,
+  Truck,
+  FileText,
+  FileBarChart,
+  CircleHelp,
+  ShieldAlert,
+  PackagePlus,
+  Archive,
+  Building,
+  Warehouse,
+  CreditCard,
+  MessageCircle
+
+} from "lucide-react";
 // import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -28,74 +36,40 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    icon: <GridIcon />,
+    icon: <Package strokeWidth={1.5} />,
     name: "Товарный запас",
     path: "/stock",
   },
   {
-    icon: <CalenderIcon />,
+    icon: <ClipboardCheck strokeWidth={1.5} />,
     name: "Инвентаризация",
     path: "/inventory",
   },
   {
-    icon: <ListIcon />,
+    icon: <Truck strokeWidth={1.5} />,
     name: "Транспорт",
     path: "/transport",
   },
   {
-    icon: <TableIcon />,
+    icon: <FileText strokeWidth={1.5} />,
     name: "Заказы",
     path: "/orders",
   },
   {
-    icon: <PageIcon />,
+    icon: <FileBarChart strokeWidth={1.5} />,
     name: "Отчеты и аналитика",
     path: "/analytics",
   },
-  // {
-  //   icon: <GridIcon />,
-  //   name: "Dashboard",
-  //   subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-  // },
-  // {
-  //   icon: <CalenderIcon />,
-  //   name: "Calendar",
-  //   path: "/calendar",
-  // },
-  // {
-  //   icon: <UserCircleIcon />,
-  //   name: "User Profile",
-  //   path: "/profile",
-  // },
-  //
-  // {
-  //   name: "Forms",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  // },
-  // {
-  //   name: "Tables",
-  //   icon: <TableIcon />,
-  //   subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  // },
-  // {
-  //   name: "Pages",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Blank Page", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
 ];
 
 const othersItems: NavItem[] = [
   {
-    icon: <PieChartIcon />,
+    icon: <CircleHelp strokeWidth={1.5} />,
     name: "Частые вопросы",
     path: "/faq",
   },
   {
-    icon: <BoxCubeIcon />,
+    icon: <ShieldAlert strokeWidth={1.5} />,
     name: "Претензии",
     subItems: [
         { name: "Финансовые претензии", path: "/finance", pro: false },
@@ -103,65 +77,37 @@ const othersItems: NavItem[] = [
     ],
   },
   {
-    icon: <PlugInIcon />,
+    icon: <PackagePlus strokeWidth={1.5} />,
     name: "Дополнительные услуги",
-    path: "/",
+    path: "/a",
   },
   {
-    icon: <CalenderIcon />,
+    icon: <Archive strokeWidth={1.5} />,
     name: "Документы",
-    path: "/",
+    path: "/a",
   },
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Charts",
-  //   subItems: [
-  //     { name: "Line Chart", path: "/line-chart", pro: false },
-  //     { name: "Bar Chart", path: "/bar-chart", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <BoxCubeIcon />,
-  //   name: "UI Elements",
-  //   subItems: [
-  //     { name: "Alerts", path: "/alerts", pro: false },
-  //     { name: "Avatar", path: "/avatars", pro: false },
-  //     { name: "Badge", path: "/badge", pro: false },
-  //     { name: "Buttons", path: "/buttons", pro: false },
-  //     { name: "Images", path: "/images", pro: false },
-  //     { name: "Videos", path: "/videos", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <PlugInIcon />,
-  //   name: "Authentication",
-  //   subItems: [
-  //     { name: "Sign In", path: "/signin", pro: false },
-  //     { name: "Sign Up", path: "/signup", pro: false },
-  //   ],
-  // },
 ];
 
 const referenceItems: NavItem[] = [
   {
-    icon: <CalenderIcon />,
+    icon: <Building strokeWidth={1.5} />,
     name: "ПЭК",
-    path: "/",
+    path: "/a",
   },
   {
-    icon: <PlugInIcon />,
+    icon: <Warehouse strokeWidth={1.5} />,
     name: "Склады",
-    path: "/",
+    path: "/a",
   },
   {
-    icon: <BoxCubeIcon />,
+    icon: <CreditCard strokeWidth={1.5} />,
     name: "Цены и услуги",
-    path: "/",
+    path: "/a",
   },
   {
-    icon: <PieChartIcon />,
+    icon: <MessageCircle strokeWidth={1.5} />,
     name: "Контактная информация",
-    path: "/",
+    path: "/a",
   },
 ];
 
