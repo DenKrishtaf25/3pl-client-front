@@ -6,7 +6,7 @@ export default function ResponsiveImage() {
     <div className="relative">
       <div className="overflow-hidden">
         <Image
-          src="/images/grid-image/image-011.png"
+          src="/images/grid-image/image-012.png"
           alt="Cover"
           className="w-full border border-gray-200 rounded-xl dark:border-gray-800"
           width={1054}

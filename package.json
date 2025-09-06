@@ -33,6 +33,7 @@
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.5",
+    "react-slick": "^0.31.0",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0"
   },
@@ -43,6 +44,7 @@
     "@types/react": "^19",
     "@types/react-datepicker": "^6.2.0",
     "@types/react-dom": "^19",
+    "@types/react-slick": "^0.23.13",
     "@types/react-transition-group": "^4.4.12",
     "eslint": "^9",
     "eslint-config-next": "15.1.3",

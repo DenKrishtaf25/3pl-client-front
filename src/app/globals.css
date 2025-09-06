@@ -738,3 +738,57 @@ span.flatpickr-weekday,
   opacity: 0.8;
   cursor: grabbing; /* Changes the cursor to indicate dragging */
 }
+
+/* slick базовое */
+.slick-list {
+  @apply overflow-hidden;
+}
+
+.slick-track {
+  @apply flex;
+}
+
+/* стрелки */
+.slick-prev,
+.slick-next {
+  @apply absolute top-1/2 -translate-y-1/2 bg-white shadow rounded-full w-10 h-10 flex items-center justify-center z-10 cursor-pointer;
+}
+
+.slick-prev {
+  @apply left-2;
+}
+
+.slick-next {
+  @apply right-2;
+}
+
+/* иконки стрелок */
+.slick-prev:before,
+.slick-next:before {
+  content: '';
+}
+
+.slick-prev svg,
+.slick-next svg {
+  @apply w-5 h-5 text-gray-800;
+}
+
+/* точки */
+.slick-dots {
+  @apply flex justify-center gap-2 mt-4;
+}
+
+.slick-dots li {
+  @apply w-3 h-3;
+}
+
+.slick-dots button {
+  @apply w-3 h-3 rounded-full bg-gray-300;
+}
+
+.slick-dots .slick-active button {
+  @apply bg-gray-800;
+}
+
+
+

@@ -92,12 +92,12 @@ const referenceItems: NavItem[] = [
   {
     icon: <Building strokeWidth={1.5} />,
     name: "ПЭК",
-    path: "/a",
+    path: "https://pecom.ru/",
   },
   {
     icon: <Warehouse strokeWidth={1.5} />,
     name: "Склады",
-    path: "/a",
+    path: "/wherehouse",
   },
   {
     icon: <CreditCard strokeWidth={1.5} />,
@@ -106,7 +106,7 @@ const referenceItems: NavItem[] = [
   },
   {
     icon: <MessageCircle strokeWidth={1.5} />,
-    name: "Контактная информация",
+    name: "Контакты",
     path: "/a",
   },
 ];

@@ -1,3 +1,7 @@
+import ComponentCard from "@/components/common/ComponentCard";
+import PageBreadcrumb from "@/components/common/PageBreadCrumb";
+import ResponsiveImage from "@/components/ui/images/ResponsiveImage";
+import ResponsiveImage2 from "@/components/ui/images/ResponsiveImage2";
 import type { Metadata } from "next";
 // import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import React from "react";
@@ -14,9 +18,17 @@ export const metadata: Metadata = {
 
 export default function Ecommerce() {
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
-      <div className="text-theme-xs dark:text-gray-400">
-        Лента новостей например
+    <>
+     
+
+      <PageBreadcrumb pageTitle="Новости" />
+      <div className="space-y-5 sm:space-y-6">
+        <ComponentCard title="Автострада">
+          <ResponsiveImage />
+        </ComponentCard>
+        <ComponentCard title="Стиль и текстиль">
+          <ResponsiveImage2 />
+        </ComponentCard>
       </div>
       {/*<div className="col-span-12 space-y-6 xl:col-span-7">*/}
       {/*  <EcommerceMetrics />*/}
@@ -39,6 +51,6 @@ export default function Ecommerce() {
       {/*<div className="col-span-12 xl:col-span-7">*/}
       {/*  <RecentOrders />*/}
       {/*</div>*/}
-    </div>
+    </>
   );
 }
