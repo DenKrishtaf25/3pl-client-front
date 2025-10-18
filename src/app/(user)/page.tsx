@@ -19,8 +19,6 @@ export const metadata: Metadata = {
 export default function Ecommerce() {
   return (
     <>
-     
-
       <PageBreadcrumb pageTitle="Новости" />
       <div className="space-y-5 sm:space-y-6">
         <ComponentCard title="Автострада">

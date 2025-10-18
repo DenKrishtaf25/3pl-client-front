@@ -5,10 +5,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const cookieStore = await cookies()
   const accessToken = cookieStore.get('accessToken')?.value
 
-  if (!accessToken) redirect('/(full-width-pages)/(auth)/signin')
+  if (!accessToken) redirect('/not-found')
 
   try {
-    const res = await fetch('http://localhost:4200/api/user/profile', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/user/profile`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -17,14 +17,17 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       cache: 'no-store',
     })
 
-    if (!res.ok) redirect('/(full-width-pages)/(auth)/signin')
+    if (!res.ok) redirect('/not-found')
 
     const data = await res.json()
     const role = data?.user?.role
 
-    if (role !== 'ADMIN') redirect('/')
+    if (role !== 'ADMIN') {
+      // Если пользователь не админ, редиректим на 404
+      redirect('/not-found')
+    }
   } catch {
-    redirect('/(full-width-pages)/(auth)/signin')
+    redirect('/not-found')
   }
 
   return <>{children}</>

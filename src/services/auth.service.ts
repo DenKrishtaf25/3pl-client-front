@@ -4,9 +4,9 @@ import { axiosClassic } from '../api/interceptors'
 import { removeFromStorage, saveTokenStorage } from './auth-token.service'
 
 export const authService = {
-	async main(type: 'login', data: IAuthForm) {
+	async login(data: IAuthForm) {
 		const response = await axiosClassic.post<IAuthResponse>(
-			`/auth/${type}`,
+			'/auth/login',
 			data
 		)
 

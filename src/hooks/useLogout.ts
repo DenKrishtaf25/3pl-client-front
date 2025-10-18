@@ -10,12 +10,12 @@ export const useLogout = () => {
     try {
       setIsLoading(true)
       await authService.logout()
-      router.push('/auth')
     } catch (error) {
       console.error('Logout error:', error)
-      router.push('/auth')
+      // Даже если logout на сервере не удался, очищаем локальное состояние
     } finally {
       setIsLoading(false)
+      router.push('/auth')
     }
   }
 

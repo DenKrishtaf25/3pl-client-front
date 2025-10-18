@@ -6,8 +6,36 @@ export interface IAuthForm {
 export interface IUser {
     id: string
     email: string
-    name: string
+    name: string | null
     role: 'USER' | 'ADMIN'
+    createdAt: string
+    updatedAt: string
+    clients?: IClient[]
+}
+
+export interface IClient {
+    id: string
+    TIN: string
+    companyName: string
+    createdAt: string
+    updatedAt: string
+}
+
+export interface IUserCreate {
+    email: string
+    name?: string
+    password: string
+    role?: 'USER' | 'ADMIN'
+    clientIds?: string[]
+    TINs?: string[] // TIN для отправки на сервер
+}
+
+export interface IUserUpdate {
+    email?: string
+    name?: string
+    role?: 'USER' | 'ADMIN'
+    clientIds?: string[]
+    TINs?: string[] // TIN для отправки на сервер
 }
 
 export interface IAuthResponse {

@@ -28,11 +28,12 @@ export default function Auth() {
     setError(null);
     setLoading(true);
     try {
-      const { data } = await authService.main("login", { email, password });
+      const { data } = await authService.login({ email, password });
       const role = data?.user?.role;
       if (role === "ADMIN") router.replace("/admin");
       else router.replace("/");
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       setError("Неверная почта или пароль");
     } finally {
       setLoading(false);
@@ -142,7 +143,7 @@ export default function Auth() {
                     <Image
                       width={231}
                       height={48}
-                      src="./images/logo/logo-dark.svg"
+                      src="/images/logo/logo-dark.svg"
                       alt="Logo"
                     />
                   </Link>

@@ -1,12 +1,14 @@
-export const errorCatch = (error: unknown): string => {
-	const err = error as {
-		response?: {
-			data?: {
-				message?: string | string[]
-			}
+export interface ApiError {
+	response?: {
+		data?: {
+			message?: string | string[]
 		}
-		message?: string
 	}
+	message?: string
+}
+
+export const errorCatch = (error: unknown): string => {
+	const err = error as ApiError
 	
 	const message = err?.response?.data?.message
 
