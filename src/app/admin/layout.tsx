@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import AdminShell from '@/layout/AdminShell'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
@@ -30,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/not-found')
   }
 
-  return <>{children}</>
+  return <AdminShell>{children}</AdminShell>
 }
 
 

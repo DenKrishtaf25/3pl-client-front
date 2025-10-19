@@ -22,7 +22,8 @@ import {
   Building,
   Warehouse,
   CreditCard,
-  MessageCircle
+  MessageCircle,
+  UserCircle
 
 } from "lucide-react";
 // import SidebarWidget from "./SidebarWidget";
@@ -111,13 +112,21 @@ const referenceItems: NavItem[] = [
   },
 ];
 
+const adminItems: NavItem[] = [
+  {
+    icon: <UserCircle strokeWidth={1.5} />,
+    name: "Пользователи",
+    path: "/admin/users",
+  },
+];
+
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
 
   const renderMenuItems = (
     navItems: NavItem[],
-    menuType: "main" | "others" | "others2"
+    menuType: "main" | "others" | "others2" | "admin"
   ) => (
     <ul className="flex flex-col gap-4">
       {navItems.map((nav, index) => (
@@ -242,7 +251,7 @@ const AppSidebar: React.FC = () => {
   );
 
   const [openSubmenu, setOpenSubmenu] = useState<{
-    type: "main" | "others" | "others2";
+    type: "main" | "others" | "others2" | "admin";
     index: number;
   } | null>(null);
   const [subMenuHeight, setSubMenuHeight] = useState<Record<string, number>>(
@@ -256,14 +265,21 @@ const AppSidebar: React.FC = () => {
   useEffect(() => {
     // Check if the current path matches any submenu item
     let submenuMatched = false;
-    ["main", "others", "others2"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
+    ["main", "others", "others2", "admin"].forEach((menuType) => {
+      const items =
+        menuType === "main"
+          ? navItems
+          : menuType === "others"
+          ? othersItems
+          : menuType === "others2"
+          ? referenceItems
+          : adminItems;
       items.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
             if (isActive(subItem.path)) {
               setOpenSubmenu({
-                type: menuType as "main" | "others" | "others2",
+                type: menuType as "main" | "others" | "others2" | "admin",
                 index,
               });
               submenuMatched = true;
@@ -292,7 +308,7 @@ const AppSidebar: React.FC = () => {
     }
   }, [openSubmenu]);
 
-  const handleSubmenuToggle = (index: number, menuType: "main" | "others" | "others2") => {
+  const handleSubmenuToggle = (index: number, menuType: "main" | "others" | "others2" | "admin") => {
     setOpenSubmenu((prevOpenSubmenu) => {
       if (
         prevOpenSubmenu &&
@@ -406,6 +422,25 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(referenceItems, "others2")}
             </div>
+
+            {pathname.startsWith("/admin") && (
+              <div>
+                <h2
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                    !isExpanded && !isHovered
+                      ? "lg:justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Администрирование"
+                  ) : (
+                    <HorizontaLDots/>
+                  )}
+                </h2>
+                {renderMenuItems(adminItems, "admin")}
+              </div>
+            )}
           </div>
         </nav>
         {/*{isExpanded || isHovered || isMobileOpen ? <SidebarWidget/> : null}*/}
