@@ -118,6 +118,11 @@ const adminItems: NavItem[] = [
     name: "Пользователи",
     path: "/admin/users",
   },
+  {
+    icon: <UserCircle strokeWidth={1.5} />,
+    name: "Клиенты",
+    path: "/admin/clients",
+  },
 ];
 
 const AppSidebar: React.FC = () => {

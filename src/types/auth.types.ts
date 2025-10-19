@@ -38,6 +38,18 @@ export interface IUserUpdate {
     TINs?: string[] // TIN для отправки на сервер
 }
 
+export interface IClientCreate {
+    TIN: string
+    companyName: string
+    userIds?: string[] // Опционально - пользователи для привязки
+}
+
+export interface IClientUpdate {
+    TIN?: string
+    companyName?: string
+    userIds?: string[]
+}
+
 export interface IAuthResponse {
     accessToken: string
     user: IUser
