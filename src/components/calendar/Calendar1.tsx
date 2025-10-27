@@ -13,6 +13,8 @@ import {
 } from "@fullcalendar/core";
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
+import { bitrixService } from "@/services/bitrix.service";
+import { IInventoryRequest } from "@/types/inventory.types";
 
 interface CalendarEvent extends EventInput {
   extendedProps: {
@@ -29,6 +31,22 @@ const Calendar: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const calendarRef = useRef<FullCalendar>(null);
   const { isOpen, openModal, closeModal } = useModal();
+  
+  // Состояние для заявки на инвентаризацию
+  const [inventoryRequest, setInventoryRequest] = useState<IInventoryRequest>({
+    companyName: "",
+    tin: "",
+    inventoryDate: "",
+    warehouse: "",
+    contactPerson: "",
+    phone: "",
+    email: "",
+    comment: ""
+  });
+  const [isInventoryMode, setIsInventoryMode] = useState(false);
+  const [bitrixLoading, setBitrixLoading] = useState(false);
+  const [bitrixError, setBitrixError] = useState<string | null>(null);
+  const [bitrixSuccess, setBitrixSuccess] = useState(false);
 
   const calendarsEvents = {
     "Критично": "danger",
@@ -114,6 +132,73 @@ const Calendar: React.FC = () => {
     setEventEndDate("");
     setEventLevel("");
     setSelectedEvent(null);
+    setIsInventoryMode(false);
+    setInventoryRequest({
+      companyName: "",
+      tin: "",
+      inventoryDate: "",
+      warehouse: "",
+      contactPerson: "",
+      phone: "",
+      email: "",
+      comment: ""
+    });
+    setBitrixError(null);
+    setBitrixSuccess(false);
+  };
+
+  const handleCreateInventoryRequest = async () => {
+    setBitrixError(null);
+    setBitrixLoading(true);
+
+    try {
+      // Валидация обязательных полей
+      if (!inventoryRequest.companyName || !inventoryRequest.tin || !inventoryRequest.inventoryDate || 
+          !inventoryRequest.warehouse || !inventoryRequest.contactPerson || !inventoryRequest.phone || !inventoryRequest.email) {
+        setBitrixError('Все поля обязательны для заполнения');
+        setBitrixLoading(false);
+        return;
+      }
+
+      // Валидация ИНН
+      const tinRegex = /^\d{10}$|^\d{12}$/;
+      if (!tinRegex.test(inventoryRequest.tin)) {
+        setBitrixError('ИНН должен содержать 10 или 12 цифр');
+        setBitrixLoading(false);
+        return;
+      }
+
+      // Валидация email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(inventoryRequest.email)) {
+        setBitrixError('Неверный формат email');
+        setBitrixLoading(false);
+        return;
+      }
+
+      const result = await bitrixService.createInventoryRequest(inventoryRequest);
+      setBitrixSuccess(true);
+      
+      // Скрыть сообщение об успехе через 5 секунд
+      setTimeout(() => setBitrixSuccess(false), 5000);
+      
+      console.log('Inventory request created successfully:', result);
+    } catch (error: any) {
+      console.error('Failed to create inventory request:', error);
+      setBitrixError(error.message || 'Ошибка при создании заявки в Битрикс24');
+    } finally {
+      setBitrixLoading(false);
+    }
+  };
+
+  const handleInventoryDateSelect = (selectInfo: DateSelectArg) => {
+    resetModalFields();
+    setInventoryRequest(prev => ({
+      ...prev,
+      inventoryDate: selectInfo.startStr
+    }));
+    setIsInventoryMode(true);
+    openModal();
   };
 
   return (
@@ -125,7 +210,7 @@ const Calendar: React.FC = () => {
           initialView="dayGridMonth"
           locale={ruLocale}
           headerToolbar={{
-            left: "prev,next addEventButton",
+            left: "prev,next addEventButton inventoryButton",
             center: "title",
             right: "dayGridMonth,timeGridWeek,timeGridDay",
           }}
@@ -139,6 +224,14 @@ const Calendar: React.FC = () => {
               text: "Новое событие +",
               click: openModal,
             },
+            inventoryButton: {
+              text: "Заявка на инвентаризацию",
+              click: () => {
+                resetModalFields();
+                setIsInventoryMode(true);
+                openModal();
+              },
+            },
           }}
         />
       </div>
@@ -150,86 +243,221 @@ const Calendar: React.FC = () => {
         <div className="flex flex-col px-2 overflow-y-auto custom-scrollbar">
           <div>
             <h5 className="mb-2 font-semibold text-gray-800 modal-title text-theme-xl dark:text-white/90 lg:text-2xl">
-              {selectedEvent ? "Редактировать событие" : "Добавить событие"}
+              {isInventoryMode 
+                ? "Заявка на инвентаризацию" 
+                : selectedEvent 
+                  ? "Редактировать событие" 
+                  : "Добавить событие"
+              }
             </h5>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Запланируйте важное: добавьте или отредактируйте событие, чтобы не забыть
+              {isInventoryMode 
+                ? "Создайте заявку на проведение инвентаризации. Заявка будет отправлена в Битрикс24."
+                : "Запланируйте важное: добавьте или отредактируйте событие, чтобы не забыть"
+              }
             </p>
           </div>
           <div className="mt-8">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                Название события
-              </label>
-              <input
-                id="event-title"
-                type="text"
-                value={eventTitle}
-                onChange={(e) => setEventTitle(e.target.value)}
-                className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-              />
-            </div>
-            <div className="mt-6">
-              <label className="block mb-4 text-sm font-medium text-gray-700 dark:text-gray-400">
-                Цвет события
-              </label>
-              <div className="flex flex-wrap items-center gap-4 sm:gap-5">
-                {Object.entries(calendarsEvents).map(([key, value]) => (
-                  <div key={key} className="n-chk">
-                    <div className={`form-check form-check-${value} form-check-inline`}>
-                      <label
-                        className="flex items-center text-sm text-gray-700 form-check-label dark:text-gray-400"
-                        htmlFor={`modal${key}`}
-                      >
-                        <span className="relative">
-                          <input
-                            className="sr-only form-check-input"
-                            type="radio"
-                            name="event-level"
-                            value={key}
-                            id={`modal${key}`}
-                            checked={eventLevel === key}
-                            onChange={() => setEventLevel(key)}
-                          />
-                          <span className="flex items-center justify-center w-5 h-5 mr-2 border border-gray-300 rounded-full box dark:border-gray-700">
-                            <span
-                              className={`h-2 w-2 rounded-full bg-white ${
-                                eventLevel === key ? "block" : "hidden"
-                              }`}
-                            ></span>
-                          </span>
-                        </span>
-                        {key}
-                      </label>
-                    </div>
+            {isInventoryMode ? (
+              // Форма заявки на инвентаризацию
+              <div className="space-y-6">
+                {bitrixSuccess && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900/20 dark:border-green-800">
+                    <p className="text-green-800 dark:text-green-200 text-sm">
+                      Заявка успешно создана в Битрикс24!
+                    </p>
                   </div>
-                ))}
+                )}
+
+                {bitrixError && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+                    <p className="text-red-800 dark:text-red-200 text-sm">{bitrixError}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Название компании <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={inventoryRequest.companyName}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, companyName: e.target.value }))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                      placeholder="ООО Рога и копыта"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      ИНН <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={inventoryRequest.tin}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, tin: e.target.value }))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                      placeholder="1234567890"
+                      maxLength={12}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Дата инвентаризации <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={inventoryRequest.inventoryDate}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, inventoryDate: e.target.value }))}
+                      className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Склад <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={inventoryRequest.warehouse}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, warehouse: e.target.value }))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                      placeholder="Склад №1"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Контактное лицо <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={inventoryRequest.contactPerson}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, contactPerson: e.target.value }))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                      placeholder="Иван Иванов"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Телефон <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={inventoryRequest.phone}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, phone: e.target.value }))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                      placeholder="+7 (999) 123-45-67"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={inventoryRequest.email}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, email: e.target.value }))}
+                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                      placeholder="ivan@company.com"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                      Комментарий
+                    </label>
+                    <textarea
+                      value={inventoryRequest.comment}
+                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, comment: e.target.value }))}
+                      className="dark:bg-dark-900 h-20 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                      placeholder="Дополнительная информация..."
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="mt-6">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                Дата начала
-              </label>
-              <input
-                id="event-start-date"
-                type="date"
-                value={eventStartDate}
-                onChange={(e) => setEventStartDate(e.target.value)}
-                className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-              />
-            </div>
-            <div className="mt-6">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                Дата окончания
-              </label>
-              <input
-                id="event-end-date"
-                type="date"
-                value={eventEndDate}
-                onChange={(e) => setEventEndDate(e.target.value)}
-                className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-              />
-            </div>
+            ) : (
+              // Обычная форма события
+              <>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Название события
+                  </label>
+                  <input
+                    id="event-title"
+                    type="text"
+                    value={eventTitle}
+                    onChange={(e) => setEventTitle(e.target.value)}
+                    className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                  />
+                </div>
+                <div className="mt-6">
+                  <label className="block mb-4 text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Цвет события
+                  </label>
+                  <div className="flex flex-wrap items-center gap-4 sm:gap-5">
+                    {Object.entries(calendarsEvents).map(([key, value]) => (
+                      <div key={key} className="n-chk">
+                        <div className={`form-check form-check-${value} form-check-inline`}>
+                          <label
+                            className="flex items-center text-sm text-gray-700 form-check-label dark:text-gray-400"
+                            htmlFor={`modal${key}`}
+                          >
+                            <span className="relative">
+                              <input
+                                className="sr-only form-check-input"
+                                type="radio"
+                                name="event-level"
+                                value={key}
+                                id={`modal${key}`}
+                                checked={eventLevel === key}
+                                onChange={() => setEventLevel(key)}
+                              />
+                              <span className="flex items-center justify-center w-5 h-5 mr-2 border border-gray-300 rounded-full box dark:border-gray-700">
+                                <span
+                                  className={`h-2 w-2 rounded-full bg-white ${
+                                    eventLevel === key ? "block" : "hidden"
+                                  }`}
+                                ></span>
+                              </span>
+                            </span>
+                            {key}
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Дата начала
+                  </label>
+                  <input
+                    id="event-start-date"
+                    type="date"
+                    value={eventStartDate}
+                    onChange={(e) => setEventStartDate(e.target.value)}
+                    className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                  />
+                </div>
+                <div className="mt-6">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                    Дата окончания
+                  </label>
+                  <input
+                    id="event-end-date"
+                    type="date"
+                    value={eventEndDate}
+                    onChange={(e) => setEventEndDate(e.target.value)}
+                    className="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent bg-none px-4 py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                  />
+                </div>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-3 mt-6 modal-footer sm:justify-end">
             <button
@@ -239,13 +467,24 @@ const Calendar: React.FC = () => {
             >
               Закрыть
             </button>
-            <button
-              onClick={handleAddOrUpdateEvent}
-              type="button"
-              className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
-            >
-              {selectedEvent ? "Сохранить изменения" : "Добавить событие"}
-            </button>
+            {isInventoryMode ? (
+              <button
+                onClick={handleCreateInventoryRequest}
+                disabled={bitrixLoading}
+                type="button"
+                className="btn btn-success btn-create-inventory flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
+              >
+                {bitrixLoading ? "Создание заявки..." : "Создать заявку в Битрикс"}
+              </button>
+            ) : (
+              <button
+                onClick={handleAddOrUpdateEvent}
+                type="button"
+                className="btn btn-success btn-update-event flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 sm:w-auto"
+              >
+                {selectedEvent ? "Сохранить изменения" : "Добавить событие"}
+              </button>
+            )}
           </div>
         </div>
       </Modal>
