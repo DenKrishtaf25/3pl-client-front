@@ -19,6 +19,10 @@ import { IInventoryRequest } from "@/types/inventory.types";
 interface CalendarEvent extends EventInput {
   extendedProps: {
     calendar: string;
+    bitrixTask?: boolean;
+    taskId?: string;
+    status?: string;
+    description?: string;
   };
 }
 
@@ -56,21 +60,25 @@ const Calendar: React.FC = () => {
   };
 
   useEffect(() => {
+    // Загружаем задачи из Битрикс24
+    loadBitrixTasks();
+    
+    // Добавляем демо-события
     setEvents([
       {
-        id: "1",
+        id: "demo-1",
         title: "Ваш план",
         start: new Date().toISOString().split("T")[0],
         extendedProps: { calendar: "Danger" },
       },
       {
-        id: "2",
+        id: "demo-2",
         title: "Ваш факт",
         start: new Date(Date.now() + 86400000).toISOString().split("T")[0],
         extendedProps: { calendar: "Success" },
       },
       {
-        id: "3",
+        id: "demo-3",
         title: "Доступные даты",
         start: new Date(Date.now() + 172800000).toISOString().split("T")[0],
         end: new Date(Date.now() + 259200000).toISOString().split("T")[0],
@@ -79,15 +87,100 @@ const Calendar: React.FC = () => {
     ]);
   }, []);
 
+  const loadBitrixTasks = async () => {
+    try {
+      const response = await bitrixService.getTasks();
+      console.log('Loaded Bitrix24 response:', response);
+      
+      // Извлекаем массив задач из ответа Битрикс24
+      const tasks = response.tasks || [];
+      console.log('Tasks array:', tasks);
+      
+      if (!Array.isArray(tasks)) {
+        console.warn('Tasks is not an array:', tasks);
+        return;
+      }
+      
+      // Фильтруем только задачи, созданные через наш ЛК (содержат "инвентаризац" в названии)
+      const inventoryTasks = tasks.filter((task: any) => {
+        const title = task.title || task.TITLE; // Пробуем оба варианта
+        const hasInventoryInTitle = title && title.toLowerCase().includes('инвентаризац');
+        console.log(`Task "${title}" - has inventory: ${hasInventoryInTitle}`);
+        return hasInventoryInTitle;
+      });
+      
+      console.log('Filtered inventory tasks:', inventoryTasks);
+      
+      // Преобразуем задачи в события календаря
+      const taskEvents: CalendarEvent[] = inventoryTasks.map((task: any) => {
+        // Безопасно извлекаем дату из описания или используем дату создания
+        let eventDate = new Date().toISOString().split("T")[0]; // По умолчанию сегодня
+        
+        // Пытаемся найти дату инвентаризации в описании
+        const description = task.description || task.DESCRIPTION || '';
+        const dateMatch = description.match(/Дата инвентаризации: (\d{2}\.\d{2}\.\d{4})/);
+        if (dateMatch) {
+          const [day, month, year] = dateMatch[1].split('.');
+          eventDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        } else if (task.createdDate || task.CREATED_DATE) {
+          // Пытаемся использовать дату создания, если она валидна
+          try {
+            const createdDate = new Date(task.createdDate || task.CREATED_DATE);
+            if (!isNaN(createdDate.getTime())) {
+              eventDate = createdDate.toISOString().split("T")[0];
+            }
+          } catch (e) {
+            console.warn('Invalid CREATED_DATE:', task.createdDate || task.CREATED_DATE);
+          }
+        }
+        
+        return {
+          id: `bitrix-${task.id || task.ID}`,
+          title: task.title || task.TITLE,
+          start: eventDate,
+          allDay: true,
+          extendedProps: { 
+            calendar: "Warning", // Цвет для задач из Битрикс24
+            bitrixTask: true,
+            taskId: task.id || task.ID,
+            status: task.status || task.STATUS,
+            description: task.description || task.DESCRIPTION
+          },
+        };
+      });
+      
+      // Обновляем события: убираем старые задачи из Битрикс24 и добавляем новые
+      setEvents(prevEvents => {
+        const nonBitrixEvents = prevEvents.filter(event => !event.extendedProps.bitrixTask);
+        return [...nonBitrixEvents, ...taskEvents];
+      });
+    } catch (error) {
+      console.error('Failed to load Bitrix24 tasks:', error);
+    }
+  };
+
   const handleDateSelect = (selectInfo: DateSelectArg) => {
     resetModalFields();
-    setEventStartDate(selectInfo.startStr);
-    setEventEndDate(selectInfo.endStr || selectInfo.startStr);
+    // При клике на дату сразу переходим в режим создания заявки на инвентаризацию
+    setIsInventoryMode(true);
+    setInventoryRequest(prev => ({
+      ...prev,
+      inventoryDate: selectInfo.startStr
+    }));
     openModal();
   };
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
+    const extendedProps = event.extendedProps as any;
+    
+    // Если это задача из Битрикс24, показываем специальную информацию
+    if (extendedProps.bitrixTask) {
+      alert(`Задача из Битрикс24:\n\nНазвание: ${event.title}\nСтатус: ${extendedProps.status}\nОписание:\n${extendedProps.description || 'Нет описания'}`);
+      return;
+    }
+    
+    // Обычная обработка для локальных событий
     setSelectedEvent(event as unknown as CalendarEvent);
     setEventTitle(event.title);
     setEventStartDate(event.start?.toISOString().split("T")[0] || "");
@@ -210,7 +303,7 @@ const Calendar: React.FC = () => {
           initialView="dayGridMonth"
           locale={ruLocale}
           headerToolbar={{
-            left: "prev,next addEventButton inventoryButton",
+            left: "prev,next addEventButton inventoryButton refreshButton",
             center: "title",
             right: "dayGridMonth,timeGridWeek,timeGridDay",
           }}
@@ -222,7 +315,11 @@ const Calendar: React.FC = () => {
           customButtons={{
             addEventButton: {
               text: "Новое событие +",
-              click: openModal,
+              click: () => {
+                resetModalFields();
+                setIsInventoryMode(false);
+                openModal();
+              },
             },
             inventoryButton: {
               text: "Заявка на инвентаризацию",
@@ -230,6 +327,12 @@ const Calendar: React.FC = () => {
                 resetModalFields();
                 setIsInventoryMode(true);
                 openModal();
+              },
+            },
+            refreshButton: {
+              text: "Обновить задачи",
+              click: () => {
+                loadBitrixTasks();
               },
             },
           }}
