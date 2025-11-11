@@ -29,6 +29,10 @@ export default function Auth() {
     setLoading(true);
     try {
       const { data } = await authService.login({ email, password });
+      
+      // Очищаем флаг истечения сессии при успешном входе
+      sessionStorage.removeItem('sessionExpiredShown');
+      
       const role = data?.user?.role;
       if (role === "ADMIN") router.replace("/admin");
       else router.replace("/");

@@ -4,10 +4,12 @@ import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useLogout } from "../../hooks/useLogout";
+import { useUser } from "@/hooks/useUser";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const { logout, isLoading } = useLogout();
+  const { user } = useUser();
 
 function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   e.stopPropagation();
@@ -37,7 +39,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Вася</span>
+        <span className="block mr-1 font-medium text-theme-sm">{user?.name || 'Пользователь'}</span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -66,10 +68,10 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Вася
+            {user?.name || 'Пользователь'}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            randomuser@pimjo.com
+            {user?.email || ''}
           </span>
         </div>
 

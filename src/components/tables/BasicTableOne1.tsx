@@ -1,4 +1,5 @@
-import React from "react";
+"use client";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -6,55 +7,37 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-
-interface Order {
-  id: number;
-  warehouse: string;
-  nomenclature: string;
-  article: string;
-  budget: string;
-}
-
-// Define the table data using the interface
-const tableData: Order[] = [
-  {
-    id: 1,
-    warehouse: "Екатеринбург",
-    nomenclature: "Упаковка ECO OpSalad 500 Black Edition (300 шт./кор.)",
-    article: "УТ000000000000018267",
-    budget: "3.9K",
-  },
-  {
-    id: 2,
-    warehouse: "Москва",
-    nomenclature: "Кронштейн BAFF HN 40-80L",
-    article: "(СГ-6208) Ручка шариковая",
-    budget: "24.9K",
-  },
-  {
-    id: 3,
-    warehouse: "Ярославль",
-    nomenclature: "Эля в белорусском костюме Кукла пластмассовая",
-    article: "(СГ-6343) Блокнот Стандар",
-    budget: "12.7K",
-  },
-  {
-    id: 4,
-    warehouse: "Владимир",
-    nomenclature: "Чехол Luazon, для iPhone 7\\/8\\/SE (2020), силиконовый, тонкий, прозрачный",
-    article: "ЕР-00003857",
-    budget: "2.8K",
-  },
-  {
-    id: 5,
-    warehouse: "Кастрома",
-    nomenclature: "Туалетная бумага Linia Veiro Classic, Желтый, 2 слоя, 4 рулона.",
-    article: "ИН00303 - брак",
-    budget: "4.5K",
-  },
-];
+import { useSelectedClient } from "@/context/ClientContext";
+import { stockService, IStock } from "@/services/stock.service";
 
 export default function BasicTableOne() {
+  const { selectedClients } = useSelectedClient();
+  const [stocks, setStocks] = useState<IStock[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadStocks();
+  }, [selectedClients]);
+
+  const loadStocks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Получаем ИНН выбранных клиентов
+      const clientTINs = selectedClients.map(client => client.TIN);
+      
+      // Загружаем данные
+      const data = await stockService.getStocks(clientTINs);
+      setStocks(data);
+    } catch (err: any) {
+      console.error('Failed to load stocks:', err);
+      setError('Ошибка при загрузке данных');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
@@ -92,26 +75,52 @@ export default function BasicTableOne() {
 
             {/* Table Body */}
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-              {tableData.map((order) => (
-                <TableRow key={order.id}>
-
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {order.warehouse}
-                  </TableCell>
-
-                  <TableCell className="px-5 py-4 text-gray-500 sm:px-6 text-start text-theme-sm dark:text-gray-400">
-                    {order.nomenclature}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
-                    {order.article}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
-                    {order.budget}
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-4 py-8 text-center">
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+                      <span className="ml-2 text-gray-600 dark:text-gray-400">Загрузка данных...</span>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-4 py-8 text-center">
+                    <div className="text-red-600 dark:text-red-400">{error}</div>
+                  </TableCell>
+                </TableRow>
+              ) : stocks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="px-4 py-8 text-center">
+                    <div className="text-gray-500 dark:text-gray-400">
+                      {selectedClients.length === 0 
+                        ? 'Выберите клиентов для отображения данных' 
+                        : 'Нет данных по выбранным клиентам'}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                stocks.map((stock) => (
+                  <TableRow key={stock.id}>
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {stock.warehouse}
+                    </TableCell>
+
+                    <TableCell className="px-5 py-4 text-gray-500 sm:px-6 text-start text-theme-sm dark:text-gray-400">
+                      {stock.nomenclature}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                      {stock.article}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
+                      {stock.quantity}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

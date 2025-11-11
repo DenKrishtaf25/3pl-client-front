@@ -8,20 +8,16 @@ class BitrixService {
    */
   async createInventoryRequest(data: IInventoryRequest) {
     try {
-      console.log('Creating inventory request in Bitrix24:', data);
-      
-      // Подготавливаем данные для Битрикс24 (задача) - с дополнительными полями
+      // Подготавливаем данные для Битрикс24 (задача)
       const bitrixData = {
         fields: {
           TITLE: `Заявка на инвентаризацию - ${data.companyName}`,
           DESCRIPTION: this.formatDescription(data),
-          RESPONSIBLE_ID: 668, // Исполнитель задачи
-          CREATED_BY: 668, // Создатель задачи
-          GROUP_ID: 0 // Корневая группа
+          RESPONSIBLE_ID: 668,
+          CREATED_BY: 668,
+          GROUP_ID: 0
         }
       };
-
-      console.log('Sending data to Bitrix24:', JSON.stringify(bitrixData, null, 2));
 
       const response = await fetch(`${this.BASE_URL}/tasks.task.add`, {
         method: 'POST',
@@ -31,17 +27,12 @@ class BitrixService {
         body: JSON.stringify(bitrixData)
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error response body:', errorText);
-        throw new Error(`Bitrix24 API error: ${response.status} ${response.statusText}. Details: ${errorText}`);
+        throw new Error(`Bitrix24 API error: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
-      console.log('Bitrix24 response:', result);
       
       if (result.error) {
         throw new Error(`Bitrix24 error: ${result.error_description || result.error}`);
@@ -77,14 +68,12 @@ class BitrixService {
       }
 
       const result = await response.json();
-      console.log('Bitrix24 getTasks full response:', result);
       
       if (result.error) {
         throw new Error(`Bitrix24 error: ${result.error_description || result.error}`);
       }
 
-      console.log('Bitrix24 tasks result:', result.result);
-      return result.result; // Возвращаем {tasks: [...]}
+      return result.result;
     } catch (error: any) {
       console.error('Failed to fetch tasks from Bitrix24:', error);
       throw new Error(`Ошибка при получении заявок из Битрикс24: ${error.message}`);
@@ -114,13 +103,11 @@ class BitrixService {
       }
 
       const result = await response.json();
-      console.log('Bitrix24 getAllTasks full response:', result);
       
       if (result.error) {
         throw new Error(`Bitrix24 error: ${result.error_description || result.error}`);
       }
 
-      console.log('Bitrix24 all tasks result:', result.result);
       return result.result;
     } catch (error: any) {
       console.error('Failed to fetch all tasks from Bitrix24:', error);

@@ -44,7 +44,16 @@ axiosWithAuth.interceptors.response.use(
 				await authService.getNewTokens()
 				return axiosWithAuth.request(originalRequest)
 			} catch (error) {
-				if (errorCatch(error) === 'jwt expired') removeFromStorage()
+				removeFromStorage()
+				// Перенаправляем на страницу логина
+				if (typeof window !== 'undefined') {
+					// Показываем уведомление только один раз
+					if (!sessionStorage.getItem('sessionExpiredShown')) {
+						sessionStorage.setItem('sessionExpiredShown', 'true')
+						alert('Сессия истекла. Пожалуйста, войдите снова.')
+					}
+					window.location.href = '/auth'
+				}
 			}
 		}
 

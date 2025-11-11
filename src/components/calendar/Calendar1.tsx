@@ -90,11 +90,9 @@ const Calendar: React.FC = () => {
   const loadBitrixTasks = async () => {
     try {
       const response = await bitrixService.getTasks();
-      console.log('Loaded Bitrix24 response:', response);
       
       // Извлекаем массив задач из ответа Битрикс24
       const tasks = response.tasks || [];
-      console.log('Tasks array:', tasks);
       
       if (!Array.isArray(tasks)) {
         console.warn('Tasks is not an array:', tasks);
@@ -103,13 +101,9 @@ const Calendar: React.FC = () => {
       
       // Фильтруем только задачи, созданные через наш ЛК (содержат "инвентаризац" в названии)
       const inventoryTasks = tasks.filter((task: any) => {
-        const title = task.title || task.TITLE; // Пробуем оба варианта
-        const hasInventoryInTitle = title && title.toLowerCase().includes('инвентаризац');
-        console.log(`Task "${title}" - has inventory: ${hasInventoryInTitle}`);
-        return hasInventoryInTitle;
+        const title = task.title || task.TITLE;
+        return title && title.toLowerCase().includes('инвентаризац');
       });
-      
-      console.log('Filtered inventory tasks:', inventoryTasks);
       
       // Преобразуем задачи в события календаря
       const taskEvents: CalendarEvent[] = inventoryTasks.map((task: any) => {
@@ -130,7 +124,7 @@ const Calendar: React.FC = () => {
               eventDate = createdDate.toISOString().split("T")[0];
             }
           } catch (e) {
-            console.warn('Invalid CREATED_DATE:', task.createdDate || task.CREATED_DATE);
+            // Игнорируем ошибки парсинга даты
           }
         }
         
@@ -269,13 +263,16 @@ const Calendar: React.FC = () => {
         return;
       }
 
-      const result = await bitrixService.createInventoryRequest(inventoryRequest);
+      await bitrixService.createInventoryRequest(inventoryRequest);
       setBitrixSuccess(true);
+      
+      // Перезагружаем задачи из Битрикс24
+      setTimeout(() => {
+        loadBitrixTasks();
+      }, 1000);
       
       // Скрыть сообщение об успехе через 5 секунд
       setTimeout(() => setBitrixSuccess(false), 5000);
-      
-      console.log('Inventory request created successfully:', result);
     } catch (error: any) {
       console.error('Failed to create inventory request:', error);
       setBitrixError(error.message || 'Ошибка при создании заявки в Битрикс24');

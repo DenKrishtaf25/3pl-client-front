@@ -1,27 +1,22 @@
-import { IUser, TypeUserForm } from '@/types/auth.types'
+import { IUser } from '@/types/auth.types';
+import { axiosWithAuth } from '../api/interceptors';
 
-import { axiosWithAuth } from '../api/interceptors'
-
-export interface IProfileResponse {
-	user: IUser
-	statistics: {
-		label: string
-		value: string
-	}[]
+interface IProfileResponse {
+  user: IUser;
 }
 
 class UserService {
-	private BASE_URL = '/user/profile'
+  private BASE_URL = '/user';
 
-	async getProfile() {
-		const response = await axiosWithAuth.get<IProfileResponse>(this.BASE_URL)
-		return response.data
-	}
+  async getProfile() {
+    const response = await axiosWithAuth.get<IProfileResponse>(`${this.BASE_URL}/profile`);
+    return response.data.user;
+  }
 
-	async update(data: TypeUserForm) {
-		const response = await axiosWithAuth.put(this.BASE_URL, data)
-		return response.data
-	}
+  async updateProfile(data: Partial<IUser>) {
+    const response = await axiosWithAuth.put<IProfileResponse>(`${this.BASE_URL}/profile`, data);
+    return response.data.user;
+  }
 }
 
-export const userService = new UserService()
+export const userService = new UserService();
