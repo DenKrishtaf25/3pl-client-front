@@ -1,14 +1,22 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { adminClientService } from '@/services/admin-client.service';
-import { IClient } from '@/types/auth.types';
+import { IClient, IClientUpdate } from '@/types/auth.types';
 import Button from '@/components/ui/button/Button';
+import { Modal } from '@/components/ui/modal';
+import Input from '@/components/form/input/InputField';
+import Label from '@/components/form/Label';
 
 export default function ClientsList() {
   const [clients, setClients] = useState<IClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [editingClient, setEditingClient] = useState<IClient | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState<IClientUpdate>({});
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchClients();
@@ -42,6 +50,67 @@ export default function ClientsList() {
       alert('Ошибка при удалении клиента');
     } finally {
       setDeleteLoading(null);
+    }
+  };
+
+  const handleEditClick = (client: IClient) => {
+    setEditingClient(client);
+    setEditFormData({
+      TIN: client.TIN,
+      companyName: client.companyName
+    });
+    setUpdateError(null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingClient(null);
+    setEditFormData({});
+    setUpdateError(null);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingClient) return;
+
+    setUpdateError(null);
+    setUpdateLoading(true);
+
+    // Валидация
+    if (!editFormData.companyName || !editFormData.TIN) {
+      setUpdateError('Название компании и ИНН обязательны');
+      setUpdateLoading(false);
+      return;
+    }
+
+    const tinRegex = /^\d{10}$|^\d{12}$/;
+    if (!tinRegex.test(editFormData.TIN)) {
+      setUpdateError('ИНН должен содержать 10 или 12 цифр');
+      setUpdateLoading(false);
+      return;
+    }
+
+    try {
+      const updatedClient = await adminClientService.update(editingClient.id, editFormData);
+      setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
+      handleCloseEditModal();
+    } catch (err: any) {
+      console.error('Failed to update client:', err);
+      let errorMessage = 'Ошибка при обновлении клиента';
+      
+      if (err.response?.data?.message) {
+        const message = err.response.data.message;
+        if (message.includes('TIN already exists')) {
+          errorMessage = 'Клиент с таким ИНН уже существует';
+        } else {
+          errorMessage = message;
+        }
+      }
+      
+      setUpdateError(errorMessage);
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
@@ -136,21 +205,112 @@ export default function ClientsList() {
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <Button
-                    onClick={() => handleDelete(client.id)}
-                    disabled={deleteLoading === client.id}
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                  >
-                    {deleteLoading === client.id ? 'Удаление...' : 'Удалить'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleEditClick(client)}
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Редактировать
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(client.id)}
+                      disabled={deleteLoading === client.id}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                      {deleteLoading === client.id ? 'Удаление...' : 'Удалить'}
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Модальное окно редактирования */}
+      <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} className="max-w-[700px] m-4">
+        <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+          <div className="px-2 pr-14">
+            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
+              Редактировать информацию о клиенте
+            </h4>
+            <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
+              Обновите данные клиента. Будьте внимательны при изменении ИНН.
+            </p>
+          </div>
+
+          <form onSubmit={handleUpdate} className="flex flex-col">
+            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3">
+              {updateError && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+                  <p className="text-red-800 dark:text-red-200 text-sm">{updateError}</p>
+                </div>
+              )}
+
+              <div>
+                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                  Информация о клиенте
+                </h5>
+
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5">
+                  <div>
+                    <Label>
+                      Название компании <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      type="text"
+                      value={editFormData.companyName || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, companyName: e.target.value }))}
+                      placeholder="ООО Рога и копыта"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label>
+                      ИНН <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      type="text"
+                      value={editFormData.TIN || ''}
+                      onChange={(e) => setEditFormData(prev => ({ ...prev, TIN: e.target.value }))}
+                      placeholder="1234567890"
+                      maxLength={12}
+                      required
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Введите 10 или 12 цифр
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+              <Button 
+                type="button"
+                size="sm" 
+                variant="outline" 
+                onClick={handleCloseEditModal}
+                disabled={updateLoading}
+              >
+                Отмена
+              </Button>
+              <Button 
+                type="submit"
+                size="sm"
+                disabled={updateLoading}
+              >
+                {updateLoading ? 'Сохранение...' : 'Сохранить изменения'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Modal>
     </div>
   );
 }

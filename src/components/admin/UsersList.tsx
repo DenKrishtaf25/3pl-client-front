@@ -5,7 +5,7 @@ import { IUser, IUserUpdate, IClient } from '@/types/auth.types';
 import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
-import Select from '@/components/form/Select';
+import { Modal } from '@/components/ui/modal';
 
 export default function UsersList() {
   const [users, setUsers] = useState<IUser[]>([]);
@@ -13,8 +13,12 @@ export default function UsersList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<IUser | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<IUserUpdate>({});
   const [editLoading, setEditLoading] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPasswordField, setShowPasswordField] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -59,23 +63,44 @@ export default function UsersList() {
     setEditForm({
       email: user.email,
       name: user.name || '',
-      role: user.role,
       clientIds: user.clients?.map(c => c.id) || []
     });
+    setUpdateError(null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditingUser(null);
+    setEditForm({});
+    setUpdateError(null);
+    setNewPassword('');
+    setShowPasswordField(false);
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
 
+    // Валидация пароля если он указан
+    if (newPassword && newPassword.length < 6) {
+      setUpdateError('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
     setEditLoading(true);
     try {
       // Преобразуем clientIds в TINs для отправки на сервер
       const selectedClients = clients.filter(client => editForm.clientIds?.includes(client.id));
-      const dataToSend = {
+      const dataToSend: any = {
         ...editForm,
         TINs: selectedClients.map(client => client.TIN)
       };
+      
+      // Добавляем пароль только если он был указан
+      if (newPassword) {
+        dataToSend.password = newPassword;
+      }
       
       console.log('Updating user with TINs:', dataToSend);
       
@@ -83,11 +108,21 @@ export default function UsersList() {
       setUsers(prev => prev.map(user => 
         user.id === editingUser.id ? updatedUser : user
       ));
-      setEditingUser(null);
-      setEditForm({});
-    } catch (err) {
+      handleCloseEditModal();
+    } catch (err: any) {
       console.error('Failed to update user:', err);
-      alert('Ошибка при обновлении пользователя');
+      let errorMessage = 'Ошибка при обновлении пользователя';
+      
+      if (err.response?.data?.message) {
+        const message = err.response.data.message;
+        if (message.includes('email already exists')) {
+          errorMessage = 'Пользователь с таким email уже существует';
+        } else {
+          errorMessage = message;
+        }
+      }
+      
+      setUpdateError(errorMessage);
     } finally {
       setEditLoading(false);
     }
@@ -101,6 +136,15 @@ export default function UsersList() {
         : (prev.clientIds || []).filter(id => id !== clientId)
     }));
   };
+
+  const handleSelectAllClients = (checked: boolean) => {
+    setEditForm(prev => ({
+      ...prev,
+      clientIds: checked ? clients.map(c => c.id) : []
+    }));
+  };
+
+  const isAllClientsSelected = clients.length > 0 && editForm.clientIds?.length === clients.length;
 
   if (loading) {
     return <div className="p-6 text-gray-600 dark:text-gray-400">Загрузка...</div>;
@@ -116,6 +160,9 @@ export default function UsersList() {
         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
           Список пользователей
         </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Всего пользователей: {users.length}
+        </p>
       </div>
 
       <div className="overflow-x-auto">
@@ -169,19 +216,23 @@ export default function UsersList() {
                   {user.clients?.map(c => c.companyName).join(', ') || '-'}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  <div className="flex space-x-2">
-                    <button
+                  <div className="flex gap-2">
+                    <Button
                       onClick={() => handleEdit(user)}
+                      variant="outline"
+                      size="sm"
                       className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                     >
-                      ✏️
-                    </button>
-                    <button
+                      Редактировать
+                    </Button>
+                    <Button
                       onClick={() => handleDelete(user.id)}
+                      variant="outline"
+                      size="sm"
                       className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                     >
-                      🗑️
-                    </button>
+                      Удалить
+                    </Button>
                   </div>
                 </td>
               </tr>
@@ -190,85 +241,174 @@ export default function UsersList() {
         </table>
       </div>
 
-      {/* Модалка редактирования */}
-      {editingUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
+      {/* Модальное окно редактирования */}
+      <Modal isOpen={isEditModalOpen} onClose={handleCloseEditModal} className="max-w-[700px] m-4">
+        <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+          <div className="px-2 pr-14">
+            <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
               Редактировать пользователя
-            </h3>
-            <form onSubmit={handleUpdate} className="space-y-4">
-              <div>
-                <Label>Email</Label>
-                <Input
-                  type="email"
-                  value={editForm.email || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
+            </h4>
+          </div>
+
+          <form onSubmit={handleUpdate} className="flex flex-col">
+            <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3">
+              {updateError && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-800">
+                  <p className="text-red-800 dark:text-red-200 text-sm">{updateError}</p>
+                </div>
+              )}
 
               <div>
-                <Label>Имя</Label>
-                <Input
-                  type="text"
-                  value={editForm.name || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
+                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                  Личная информация
+                </h5>
 
-              <div>
-                <Label>Роль</Label>
-                <Select
-                  value={editForm.role || 'USER'}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, role: e.target.value as 'USER' | 'ADMIN' }))}
-                >
-                  <option value="USER">Пользователь</option>
-                  <option value="ADMIN">Администратор</option>
-                </Select>
-              </div>
+                <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                  <div className="col-span-2 lg:col-span-1">
+                    <Label>Email <span className="text-red-500">*</span></Label>
+                    <Input
+                      type="email"
+                      value={editForm.email || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                      required
+                    />
+                  </div>
 
-              <div>
-                <Label>Клиенты</Label>
-                <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-                  {clients.map(client => (
-                    <label key={client.id} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={editForm.clientIds?.includes(client.id) || false}
-                        onChange={(e) => handleClientChange(client.id, e.target.checked)}
-                        className="rounded border-gray-300 dark:border-gray-600"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        {client.companyName} ({client.TIN})
+                  <div className="col-span-2 lg:col-span-1">
+                    <Label>Имя</Label>
+                    <Input
+                      type="text"
+                      value={editForm.name || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Имя пользователя"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Label>Роль</Label>
+                    <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        editingUser?.role === 'ADMIN'
+                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                      }`}>
+                        {editingUser?.role === 'ADMIN' ? 'Администратор' : 'Пользователь'}
                       </span>
-                    </label>
-                  ))}
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Пароль</Label>
+                      {!showPasswordField && (
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordField(true)}
+                          className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          Изменить пароль
+                        </button>
+                      )}
+                    </div>
+                    {showPasswordField ? (
+                      <div className="space-y-2">
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Введите новый пароль (минимум 6 символов)"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowPasswordField(false);
+                            setNewPassword('');
+                          }}
+                          className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                        >
+                          Отменить изменение пароля
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          ••••••••
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setEditingUser(null);
-                    setEditForm({});
-                  }}
-                  className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                >
-                  Отмена
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={editLoading}
-                  className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  {editLoading ? 'Сохранение...' : 'Сохранить'}
-                </Button>
+              <div className="mt-7">
+                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                  Привязка к клиентам
+                </h5>
+
+                <div>
+                  <Label>Выберите клиентов</Label>
+                  <div className="space-y-2 max-h-48 border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                    {clients.length === 0 ? (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Нет доступных клиентов
+                      </p>
+                    ) : (
+                      <>
+                        {/* Чекбокс "Все" */}
+                        <label className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded pb-2 border-b border-gray-200 dark:border-gray-600">
+                          <input
+                            type="checkbox"
+                            checked={isAllClientsSelected}
+                            onChange={(e) => handleSelectAllClients(e.target.checked)}
+                            className="rounded border-gray-300 dark:border-gray-600"
+                          />
+                          <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                            Все клиенты
+                          </span>
+                        </label>
+                        
+                        {/* Список клиентов */}
+                        {clients.map(client => (
+                          <label key={client.id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={editForm.clientIds?.includes(client.id) || false}
+                              onChange={(e) => handleClientChange(client.id, e.target.checked)}
+                              className="rounded border-gray-300 dark:border-gray-600"
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {client.companyName} ({client.TIN})
+                            </span>
+                          </label>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </form>
-          </div>
+            </div>
+
+            <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
+              <Button 
+                type="button"
+                size="sm" 
+                variant="outline" 
+                onClick={handleCloseEditModal}
+                disabled={editLoading}
+              >
+                Отмена
+              </Button>
+              <Button 
+                type="submit"
+                size="sm"
+                disabled={editLoading}
+              >
+                {editLoading ? 'Сохранение...' : 'Сохранить изменения'}
+              </Button>
+            </div>
+          </form>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

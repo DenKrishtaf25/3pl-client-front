@@ -34,6 +34,7 @@ export interface IUserUpdate {
     email?: string
     name?: string
     role?: 'USER' | 'ADMIN'
+    password?: string
     clientIds?: string[]
     TINs?: string[] // TIN для отправки на сервер
 }

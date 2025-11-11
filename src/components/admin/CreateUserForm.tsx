@@ -143,6 +143,15 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
     });
   };
 
+  const handleSelectAllClients = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      clientIds: checked ? clients.map(c => c.id) : []
+    }));
+  };
+
+  const isAllClientsSelected = clients.length > 0 && formData.clientIds?.length === clients.length;
+
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
       <h2 className="text-xl font-semibold mb-6 text-gray-800 dark:text-gray-100">
@@ -215,19 +224,35 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
                 Нет доступных клиентов
               </p>
             ) : (
-              clients.map(client => (
-                <label key={client.id} className="flex items-center space-x-2">
+              <>
+                {/* Чекбокс "Все" */}
+                <label className="flex items-center space-x-2 pb-2 border-b border-gray-200 dark:border-gray-600">
                   <input
                     type="checkbox"
-                    checked={formData.clientIds?.includes(client.id) || false}
-                    onChange={(e) => handleClientChange(client.id, e.target.checked)}
+                    checked={isAllClientsSelected}
+                    onChange={(e) => handleSelectAllClients(e.target.checked)}
                     className="rounded border-gray-300 dark:border-gray-600"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {client.companyName} ({client.TIN})
+                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    Все клиенты
                   </span>
                 </label>
-              ))
+                
+                {/* Список клиентов */}
+                {clients.map(client => (
+                  <label key={client.id} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.clientIds?.includes(client.id) || false}
+                      onChange={(e) => handleClientChange(client.id, e.target.checked)}
+                      className="rounded border-gray-300 dark:border-gray-600"
+                    />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {client.companyName} ({client.TIN})
+                    </span>
+                  </label>
+                ))}
+              </>
             )}
           </div>
         </div>
