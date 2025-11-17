@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   {
     icon: <Truck strokeWidth={1.5} />,
     name: "Транспорт",
-    path: "/transport",
+    path: "/registry",
   },
   {
     icon: <FileText strokeWidth={1.5} />,
