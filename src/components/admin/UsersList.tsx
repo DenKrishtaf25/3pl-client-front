@@ -92,7 +92,7 @@ export default function UsersList() {
     try {
       // Преобразуем clientIds в TINs для отправки на сервер
       const selectedClients = clients.filter(client => editForm.clientIds?.includes(client.id));
-      const dataToSend: any = {
+      const dataToSend: IUserUpdate = {
         ...editForm,
         TINs: selectedClients.map(client => client.TIN)
       };
@@ -109,16 +109,19 @@ export default function UsersList() {
         user.id === editingUser.id ? updatedUser : user
       ));
       handleCloseEditModal();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update user:', err);
       let errorMessage = 'Ошибка при обновлении пользователя';
       
-      if (err.response?.data?.message) {
-        const message = err.response.data.message;
-        if (message.includes('email already exists')) {
-          errorMessage = 'Пользователь с таким email уже существует';
-        } else {
-          errorMessage = message;
+      if (err && typeof err === 'object' && 'response' in err) {
+        const apiError = err as { response?: { data?: { message?: string } } };
+        if (apiError.response?.data?.message) {
+          const message = apiError.response.data.message;
+          if (message.includes('email already exists')) {
+            errorMessage = 'Пользователь с таким email уже существует';
+          } else {
+            errorMessage = message;
+          }
         }
       }
       

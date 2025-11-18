@@ -16,8 +16,13 @@ class AdminClientService {
       const response = await axiosWithAuth.post<IClient>(this.BASE_URL, data)
       console.log('Client created successfully:', response.data)
       return response.data
-    } catch (error: any) {
-      console.error('Create client error:', error.response?.data || error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { data?: unknown }; message?: string };
+        console.error('Create client error:', apiError.response?.data || apiError.message)
+      } else if (error instanceof Error) {
+        console.error('Create client error:', error.message)
+      }
       console.error('Full error:', error)
       throw error
     }

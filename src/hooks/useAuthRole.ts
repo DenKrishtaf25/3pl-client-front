@@ -14,7 +14,7 @@ export function useAuthRole() {
       try {
         const profile = await userService.getProfile()
         if (!mounted) return
-        setRole(profile?.user?.role ?? null)
+        setRole(profile?.role ?? null)
       } catch (error) {
         if (!mounted) return
         console.error('Failed to get user profile:', error)

@@ -31,7 +31,7 @@ export default function BasicTableOne() {
       // Загружаем данные
       const data = await stockService.getStocks(clientTINs);
       setStocks(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load stocks:', err);
       setError('Ошибка при загрузке данных');
     } finally {

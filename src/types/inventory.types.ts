@@ -9,15 +9,14 @@ export interface IInventoryRequest {
   comment?: string;
 }
 
-export interface IInventoryRequestForm extends IInventoryRequest {
-  // Дополнительные поля для формы
-}
+export type IInventoryRequestForm = IInventoryRequest;
 
 export interface IBitrixTask {
   ID: string;
   TITLE: string;
   CREATED_DATE: string;
   STATUS: string;
+  DESCRIPTION?: string;
   UF_CRM_TASK_INVENTORY_DATE?: string;
   UF_CRM_TASK_COMPANY_NAME?: string;
   UF_CRM_TASK_TIN?: string;

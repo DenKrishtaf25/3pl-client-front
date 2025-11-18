@@ -67,32 +67,50 @@ export default function CreateClientForm({ onClientCreated }: CreateClientFormPr
       
       // Скрыть сообщение об успехе через 3 секунды
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create client:', err);
-      console.error('Error response:', err.response?.data);
       
       // Более детальная обработка ошибок
       let errorMessage = 'Ошибка при создании клиента';
       
-      if (err.response?.data?.message) {
-        const message = err.response.data.message;
-        if (message.includes('TIN already exists') || message.includes('TIN must be unique')) {
-          errorMessage = 'Клиент с таким ИНН уже существует';
-        } else if (message.includes('Invalid TIN')) {
-          errorMessage = 'Неверный формат ИНН';
-        } else {
-          errorMessage = message;
+      if (err && typeof err === 'object' && 'response' in err) {
+        const apiError = err as { 
+          response?: { 
+            data?: { 
+              message?: string;
+              error?: string;
+              errors?: string | Array<{ message?: string } | string>;
+            } 
+          };
+          message?: string;
+        };
+        
+        if (apiError.response?.data?.message) {
+          const message = apiError.response.data.message;
+          if (message.includes('TIN already exists') || message.includes('TIN must be unique')) {
+            errorMessage = 'Клиент с таким ИНН уже существует';
+          } else if (message.includes('Invalid TIN')) {
+            errorMessage = 'Неверный формат ИНН';
+          } else {
+            errorMessage = message;
+          }
+        } else if (apiError.response?.data?.error) {
+          errorMessage = apiError.response.data.error;
+        } else if (apiError.response?.data?.errors) {
+          const validationErrors = apiError.response.data.errors;
+          if (Array.isArray(validationErrors)) {
+            errorMessage = validationErrors.map((error) => 
+              typeof error === 'object' && error !== null && 'message' in error 
+                ? error.message || String(error)
+                : String(error)
+            ).join(', ');
+          } else {
+            errorMessage = String(validationErrors);
+          }
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
         }
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.response?.data?.errors) {
-        const validationErrors = err.response.data.errors;
-        if (Array.isArray(validationErrors)) {
-          errorMessage = validationErrors.map((error: any) => error.message || error).join(', ');
-        } else {
-          errorMessage = validationErrors;
-        }
-      } else if (err.message) {
+      } else if (err instanceof Error) {
         errorMessage = err.message;
       }
       

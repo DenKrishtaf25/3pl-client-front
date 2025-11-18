@@ -1,4 +1,5 @@
 import { axiosWithAuth } from '../api/interceptors';
+import { IClient } from '../types/auth.types';
 
 export interface IRegistry {
   id: string;
@@ -18,7 +19,7 @@ export interface IRegistry {
   clientTIN: string;
   createdAt?: string;
   updatedAt?: string;
-  client?: any;
+  client?: IClient;
 }
 
 class RegistryService {
@@ -32,7 +33,7 @@ class RegistryService {
       }
       const response = await axiosWithAuth.get<IRegistry[]>(url);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch registries:', error);
       throw error;
     }

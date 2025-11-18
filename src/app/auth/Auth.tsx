@@ -4,14 +4,12 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import GridShape from "@/components/common/GridShape";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import Image from "next/image";
-import { ThemeProvider } from "@/context/ThemeContext";
 import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
 
 export default function Auth() {

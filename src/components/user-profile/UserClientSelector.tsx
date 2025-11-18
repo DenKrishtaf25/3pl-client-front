@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import { useSelectedClient } from "@/context/ClientContext";
-import { IClient } from "@/types/auth.types";
 
 export default function UserClientSelector() {
   const { selectedClients, toggleClient, isClientSelected, allClients } = useSelectedClient();

@@ -15,8 +15,8 @@ export default function SelectInputs() {
 
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
-  const handleSelectChange = (value: string) => {
-    console.log("Selected value:", value);
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log("Selected value:", e.target.value);
   };
 
   const multiOptions = [
@@ -34,11 +34,16 @@ export default function SelectInputs() {
           <Label>Select Input</Label>
          <div className="relative">
            <Select
-            options={options}
-            placeholder="Select Option"
             onChange={handleSelectChange}
             className="dark:bg-dark-900"
-          />
+          >
+            <option value="">Select Option</option>
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
           <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
               <ChevronDownIcon/>
             </span>

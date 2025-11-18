@@ -15,9 +15,10 @@ export function useUser() {
         setUser(userData);
         // Сохраняем в localStorage для быстрого доступа
         localStorage.setItem('user', JSON.stringify(userData));
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to load user profile:', error);
-        setError(error.message || 'Ошибка при загрузке профиля');
+        const errorMessage = error instanceof Error ? error.message : 'Ошибка при загрузке профиля';
+        setError(errorMessage);
         
         // Пытаемся загрузить из localStorage как запасной вариант
         try {
@@ -44,9 +45,10 @@ export function useUser() {
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
       setError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to refetch user profile:', error);
-      setError(error.message || 'Ошибка при загрузке профиля');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при загрузке профиля';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

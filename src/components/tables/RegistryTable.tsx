@@ -29,7 +29,7 @@ export default function RegistryTable() {
       
       const data = await registryService.getRegistries(clientTINs);
       setRegistries(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load registries:', err);
       setError('Ошибка при загрузке данных');
     } finally {

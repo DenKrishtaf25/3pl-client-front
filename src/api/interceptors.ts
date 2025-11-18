@@ -43,7 +43,7 @@ axiosWithAuth.interceptors.response.use(
 			try {
 				await authService.getNewTokens()
 				return axiosWithAuth.request(originalRequest)
-			} catch (error) {
+			} catch {
 				removeFromStorage()
 				// Перенаправляем на страницу логина
 				if (typeof window !== 'undefined') {

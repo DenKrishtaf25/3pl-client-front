@@ -14,7 +14,7 @@ import {
 import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
 import { bitrixService } from "@/services/bitrix.service";
-import { IInventoryRequest } from "@/types/inventory.types";
+import { IInventoryRequest, IBitrixTask } from "@/types/inventory.types";
 
 interface CalendarEvent extends EventInput {
   extendedProps: {
@@ -100,45 +100,53 @@ const Calendar: React.FC = () => {
       }
       
       // Фильтруем только задачи, созданные через наш ЛК (содержат "инвентаризац" в названии)
-      const inventoryTasks = tasks.filter((task: any) => {
-        const title = task.title || task.TITLE;
+      const inventoryTasks = tasks.filter((task: IBitrixTask | { title?: string; TITLE?: string }) => {
+        const title = 'title' in task ? task.title : task.TITLE;
         return title && title.toLowerCase().includes('инвентаризац');
       });
       
       // Преобразуем задачи в события календаря
-      const taskEvents: CalendarEvent[] = inventoryTasks.map((task: any) => {
+      const taskEvents: CalendarEvent[] = inventoryTasks.map((task: IBitrixTask | { title?: string; TITLE?: string; createdDate?: string; CREATED_DATE?: string; description?: string; DESCRIPTION?: string }) => {
         // Безопасно извлекаем дату из описания или используем дату создания
         let eventDate = new Date().toISOString().split("T")[0]; // По умолчанию сегодня
         
         // Пытаемся найти дату инвентаризации в описании
-        const description = task.description || task.DESCRIPTION || '';
+        const description = ('DESCRIPTION' in task ? task.DESCRIPTION : undefined) || ('description' in task ? task.description : undefined) || '';
         const dateMatch = description.match(/Дата инвентаризации: (\d{2}\.\d{2}\.\d{4})/);
         if (dateMatch) {
           const [day, month, year] = dateMatch[1].split('.');
           eventDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-        } else if (task.createdDate || task.CREATED_DATE) {
-          // Пытаемся использовать дату создания, если она валидна
-          try {
-            const createdDate = new Date(task.createdDate || task.CREATED_DATE);
-            if (!isNaN(createdDate.getTime())) {
-              eventDate = createdDate.toISOString().split("T")[0];
+        } else {
+          const createdDateValue = ('CREATED_DATE' in task ? task.CREATED_DATE : undefined) || ('createdDate' in task ? task.createdDate : undefined);
+          if (createdDateValue) {
+            // Пытаемся использовать дату создания, если она валидна
+            try {
+              const createdDate = new Date(createdDateValue);
+              if (!isNaN(createdDate.getTime())) {
+                eventDate = createdDate.toISOString().split("T")[0];
+              }
+            } catch {
+              // Игнорируем ошибки парсинга даты
             }
-          } catch (e) {
-            // Игнорируем ошибки парсинга даты
           }
         }
         
+        const taskId = ('ID' in task ? task.ID : undefined) || ('id' in task ? task.id : undefined) || '';
+        const taskTitle = ('TITLE' in task ? task.TITLE : undefined) || ('title' in task ? task.title : undefined) || '';
+        const taskStatus = ('STATUS' in task ? task.STATUS : undefined) || ('status' in task ? task.status : undefined) || '';
+        const taskDescription = ('DESCRIPTION' in task ? task.DESCRIPTION : undefined) || ('description' in task ? task.description : undefined) || '';
+        
         return {
-          id: `bitrix-${task.id || task.ID}`,
-          title: task.title || task.TITLE,
+          id: `bitrix-${taskId}`,
+          title: taskTitle,
           start: eventDate,
           allDay: true,
           extendedProps: { 
             calendar: "Warning", // Цвет для задач из Битрикс24
             bitrixTask: true,
-            taskId: task.id || task.ID,
-            status: task.status || task.STATUS,
-            description: task.description || task.DESCRIPTION
+            taskId: String(taskId),
+            status: String(taskStatus),
+            description: taskDescription
           },
         };
       });
@@ -166,7 +174,7 @@ const Calendar: React.FC = () => {
 
   const handleEventClick = (clickInfo: EventClickArg) => {
     const event = clickInfo.event;
-    const extendedProps = event.extendedProps as any;
+    const extendedProps = event.extendedProps as { bitrixTask?: boolean; status?: string; description?: string };
     
     // Если это задача из Битрикс24, показываем специальную информацию
     if (extendedProps.bitrixTask) {
@@ -273,23 +281,15 @@ const Calendar: React.FC = () => {
       
       // Скрыть сообщение об успехе через 5 секунд
       setTimeout(() => setBitrixSuccess(false), 5000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create inventory request:', error);
-      setBitrixError(error.message || 'Ошибка при создании заявки в Битрикс24');
+      const errorMessage = error instanceof Error ? error.message : 'Ошибка при создании заявки в Битрикс24';
+      setBitrixError(errorMessage);
     } finally {
       setBitrixLoading(false);
     }
   };
 
-  const handleInventoryDateSelect = (selectInfo: DateSelectArg) => {
-    resetModalFields();
-    setInventoryRequest(prev => ({
-      ...prev,
-      inventoryDate: selectInfo.startStr
-    }));
-    setIsInventoryMode(true);
-    openModal();
-  };
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">

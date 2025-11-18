@@ -1,4 +1,5 @@
 import { axiosWithAuth } from '../api/interceptors';
+import { IClient } from '../types/auth.types';
 
 export interface IStock {
   id: string;
@@ -9,7 +10,7 @@ export interface IStock {
   clientTIN: string;
   createdAt?: string;
   updatedAt?: string;
-  client?: any;
+  client?: IClient;
 }
 
 class StockService {
@@ -31,7 +32,7 @@ class StockService {
       
       const response = await axiosWithAuth.get<IStock[]>(url);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch stocks:', error);
       throw error;
     }

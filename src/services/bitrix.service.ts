@@ -28,7 +28,6 @@ class BitrixService {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
         throw new Error(`Bitrix24 API error: ${response.status} ${response.statusText}`);
       }
 
@@ -39,9 +38,10 @@ class BitrixService {
       }
 
       return result.result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create inventory request in Bitrix24:', error);
-      throw new Error(`Ошибка при создании заявки в Битрикс24: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      throw new Error(`Ошибка при создании заявки в Битрикс24: ${errorMessage}`);
     }
   }
 
@@ -74,9 +74,10 @@ class BitrixService {
       }
 
       return result.result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch tasks from Bitrix24:', error);
-      throw new Error(`Ошибка при получении заявок из Битрикс24: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      throw new Error(`Ошибка при получении заявок из Битрикс24: ${errorMessage}`);
     }
   }
 
@@ -109,9 +110,10 @@ class BitrixService {
       }
 
       return result.result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch all tasks from Bitrix24:', error);
-      throw new Error(`Ошибка при получении всех задач из Битрикс24: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      throw new Error(`Ошибка при получении всех задач из Битрикс24: ${errorMessage}`);
     }
   }
 

@@ -16,8 +16,13 @@ class AdminUserService {
       const response = await axiosWithAuth.post<IUser>(this.BASE_URL, data)
       console.log('User created successfully:', response.data)
       return response.data
-    } catch (error: any) {
-      console.error('Create user error:', error.response?.data || error.message)
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const apiError = error as { response?: { data?: unknown }; message?: string };
+        console.error('Create user error:', apiError.response?.data || apiError.message)
+      } else if (error instanceof Error) {
+        console.error('Create user error:', error.message)
+      }
       console.error('Full error:', error)
       throw error
     }

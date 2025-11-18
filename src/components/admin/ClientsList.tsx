@@ -28,7 +28,7 @@ export default function ClientsList() {
       const data = await adminClientService.getAll();
       setClients(data);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch clients:', err);
       setError('Ошибка при загрузке клиентов');
     } finally {
@@ -45,7 +45,7 @@ export default function ClientsList() {
       setDeleteLoading(clientId);
       await adminClientService.delete(clientId);
       setClients(prev => prev.filter(client => client.id !== clientId));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete client:', err);
       alert('Ошибка при удалении клиента');
     } finally {
@@ -95,16 +95,19 @@ export default function ClientsList() {
       const updatedClient = await adminClientService.update(editingClient.id, editFormData);
       setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
       handleCloseEditModal();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to update client:', err);
       let errorMessage = 'Ошибка при обновлении клиента';
       
-      if (err.response?.data?.message) {
-        const message = err.response.data.message;
-        if (message.includes('TIN already exists')) {
-          errorMessage = 'Клиент с таким ИНН уже существует';
-        } else {
-          errorMessage = message;
+      if (err && typeof err === 'object' && 'response' in err) {
+        const apiError = err as { response?: { data?: { message?: string } } };
+        if (apiError.response?.data?.message) {
+          const message = apiError.response.data.message;
+          if (message.includes('TIN already exists')) {
+            errorMessage = 'Клиент с таким ИНН уже существует';
+          } else {
+            errorMessage = message;
+          }
         }
       }
       
