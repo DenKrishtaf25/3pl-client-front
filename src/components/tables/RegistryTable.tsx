@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -16,11 +16,7 @@ export default function RegistryTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadRegistries();
-  }, [selectedClients]);
-
-  const loadRegistries = async () => {
+  const loadRegistries = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -35,7 +31,11 @@ export default function RegistryTable() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClients]);
+
+  useEffect(() => {
+    loadRegistries();
+  }, [loadRegistries]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

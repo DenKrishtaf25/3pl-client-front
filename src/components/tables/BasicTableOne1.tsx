@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -16,11 +16,7 @@ export default function BasicTableOne() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadStocks();
-  }, [selectedClients]);
-
-  const loadStocks = async () => {
+  const loadStocks = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -37,7 +33,12 @@ export default function BasicTableOne() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedClients]);
+
+  useEffect(() => {
+    loadStocks();
+  }, [loadStocks]);
+
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
       <div className="max-w-full overflow-x-auto">
