@@ -42,11 +42,6 @@ const navItems: NavItem[] = [
     path: "/stock",
   },
   {
-    icon: <ClipboardCheck strokeWidth={1.5} />,
-    name: "Инвентаризация",
-    path: "/inventory",
-  },
-  {
     icon: <Truck strokeWidth={1.5} />,
     name: "Транспорт",
     path: "/registry",
@@ -55,6 +50,11 @@ const navItems: NavItem[] = [
     icon: <FileText strokeWidth={1.5} />,
     name: "Заказы",
     path: "/orders",
+  },
+  {
+    icon: <ClipboardCheck strokeWidth={1.5} />,
+    name: "Инвентаризация",
+    path: "/inventory",
   },
   {
     icon: <FileBarChart strokeWidth={1.5} />,
