@@ -1,4 +1,4 @@
-import { IClient, IClientCreate, IClientUpdate } from '@/types/auth.types'
+import { IClient, IClientCreate, IClientUpdate, IPaginatedResponse, IClientQueryParams } from '@/types/auth.types'
 import { axiosWithAuth } from '../api/interceptors'
 
 class AdminClientService {
@@ -7,6 +7,47 @@ class AdminClientService {
   async getAll() {
     const response = await axiosWithAuth.get<IClient[]>(this.BASE_URL)
     return response.data
+  }
+
+  async getPaginated(params?: IClientQueryParams): Promise<IPaginatedResponse<IClient>> {
+    const queryParams = new URLSearchParams()
+    
+    if (params?.search) {
+      queryParams.append('search', params.search)
+    }
+    if (params?.page) {
+      queryParams.append('page', params.page.toString())
+    }
+    if (params?.limit) {
+      queryParams.append('limit', params.limit.toString())
+    }
+    if (params?.sortBy) {
+      queryParams.append('sortBy', params.sortBy)
+    }
+    if (params?.sortOrder) {
+      queryParams.append('sortOrder', params.sortOrder)
+    }
+
+    const url = queryParams.toString() 
+      ? `${this.BASE_URL}?${queryParams.toString()}`
+      : this.BASE_URL
+
+    const response = await axiosWithAuth.get<IPaginatedResponse<IClient> | IClient[]>(url)
+    
+    // Если ответ - массив (старый формат), преобразуем в пагинированный формат
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        meta: {
+          total: response.data.length,
+          page: params?.page || 1,
+          limit: params?.limit || response.data.length,
+          totalPages: 1
+        }
+      }
+    }
+    
+    return response.data as IPaginatedResponse<IClient>
   }
 
   async create(data: IClientCreate) {

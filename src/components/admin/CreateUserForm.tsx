@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { adminUserService } from '@/services/admin-user.service';
+import { adminClientService } from '@/services/admin-client.service';
 import { IUserCreate, IClient } from '@/types/auth.types';
 import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
@@ -22,6 +23,8 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientsLoading, setClientsLoading] = useState(true);
 
   useEffect(() => {
     fetchClients();
@@ -29,10 +32,65 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
 
   const fetchClients = async () => {
     try {
-      const data = await adminUserService.getClients();
-      setClients(data);
+      setClientsLoading(true);
+      console.log('Fetching clients for CreateUserForm...');
+      
+      // Пробуем получить все клиенты через getAll (без пагинации)
+      try {
+        const allClients = await adminClientService.getAll();
+        if (Array.isArray(allClients)) {
+          console.log('Received all clients via getAll:', allClients.length, 'clients');
+          setClients(allClients);
+          return;
+        }
+      } catch (getAllError) {
+        console.warn('getAll failed, trying paginated API:', getAllError);
+      }
+      
+      // Если getAll не работает, используем пагинированный API с максимальным лимитом (50)
+      // Делаем несколько запросов, если нужно получить всех клиентов
+      let allClients: IClient[] = [];
+      let page = 1;
+      const limit = 50; // Максимальный лимит согласно API
+      let hasMore = true;
+      
+      while (hasMore) {
+        const paginatedResponse = await adminClientService.getPaginated({
+          limit,
+          page,
+          sortBy: 'companyName',
+          sortOrder: 'asc'
+        });
+        
+        if (paginatedResponse && paginatedResponse.data && Array.isArray(paginatedResponse.data)) {
+          allClients = [...allClients, ...paginatedResponse.data];
+          
+          // Проверяем, есть ли еще страницы
+          if (paginatedResponse.meta) {
+            hasMore = page < paginatedResponse.meta.totalPages;
+            page++;
+          } else {
+            // Если нет мета-информации, проверяем по количеству полученных элементов
+            hasMore = paginatedResponse.data.length === limit;
+            page++;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      console.log('Setting clients:', allClients.length, 'clients');
+      setClients(allClients);
     } catch (err) {
       console.error('Failed to fetch clients:', err);
+      if (err && typeof err === 'object' && 'response' in err) {
+        const apiError = err as { response?: { data?: unknown; status?: number } };
+        console.error('API Error status:', apiError.response?.status);
+        console.error('API Error data:', apiError.response?.data);
+      }
+      setClients([]); // Убеждаемся, что clients всегда массив
+    } finally {
+      setClientsLoading(false);
     }
   };
 
@@ -63,7 +121,7 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
     try {
       
       // Проверяем, что выбранные клиенты существуют
-      const selectedClients = clients.filter(client => formData.clientIds?.includes(client.id));
+      const selectedClients = (clients || []).filter(client => formData.clientIds?.includes(client.id));
       
       if (selectedClients.length === 0) {
         setError('Выбранные клиенты не найдены');
@@ -162,13 +220,30 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
   };
 
   const handleSelectAllClients = (checked: boolean) => {
+    // Выбираем только отфильтрованных клиентов
+    const filteredClients = getFilteredClients();
     setFormData(prev => ({
       ...prev,
-      clientIds: checked ? clients.map(c => c.id) : []
+      clientIds: checked 
+        ? filteredClients.map(c => c.id)
+        : prev.clientIds?.filter(id => !filteredClients.some(c => c.id === id)) || []
     }));
   };
 
-  const isAllClientsSelected = clients.length > 0 && formData.clientIds?.length === clients.length;
+  const getFilteredClients = () => {
+    if (!clients || clients.length === 0) return [];
+    if (!clientSearch.trim()) return clients;
+    
+    const searchLower = clientSearch.toLowerCase().trim();
+    return clients.filter(client => 
+      client.companyName.toLowerCase().includes(searchLower) ||
+      client.TIN.toLowerCase().includes(searchLower)
+    );
+  };
+
+  const filteredClients = getFilteredClients();
+  const isAllClientsSelected = filteredClients.length > 0 && 
+    filteredClients.every(client => formData.clientIds?.includes(client.id));
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -236,40 +311,62 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
               </span>
             )}
           </p>
-          <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3">
-            {clients.length === 0 ? (
+          <div className="space-y-2 max-h-80 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+            {clientsLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Загрузка клиентов...</span>
+              </div>
+            ) : !clients || clients.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 Нет доступных клиентов
               </p>
             ) : (
               <>
-                {/* Чекбокс "Все" */}
-                <label className="flex items-center space-x-2 pb-2 border-b border-gray-200 dark:border-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={isAllClientsSelected}
-                    onChange={(e) => handleSelectAllClients(e.target.checked)}
-                    className="rounded border-gray-300 dark:border-gray-600"
-                  />
-                  <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                    Все клиенты
-                  </span>
-                </label>
-                
-                {/* Список клиентов */}
-                {clients.map(client => (
-                  <label key={client.id} className="flex items-center space-x-2">
+                {/* Чекбокс "Все" и поиск */}
+                <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-200 dark:border-gray-600">
+                  <label className="flex items-center space-x-2 flex-shrink-0">
                     <input
                       type="checkbox"
-                      checked={formData.clientIds?.includes(client.id) || false}
-                      onChange={(e) => handleClientChange(client.id, e.target.checked)}
+                      checked={isAllClientsSelected}
+                      onChange={(e) => handleSelectAllClients(e.target.checked)}
                       className="rounded border-gray-300 dark:border-gray-600"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {client.companyName} ({client.TIN})
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                      Все клиенты
                     </span>
                   </label>
-                ))}
+                  
+                  {/* Поиск клиентов */}
+                  <Input
+                    type="text"
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    placeholder="Поиск по названию или ИНН..."
+                    className="min-w-[300px] text-sm py-1.5"
+                  />
+                </div>
+                
+                {/* Список клиентов */}
+                {filteredClients.length === 0 ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                    {clientSearch ? `Клиенты не найдены по запросу "${clientSearch}"` : 'Нет доступных клиентов'}
+                  </p>
+                ) : (
+                  filteredClients.map(client => (
+                    <label key={client.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={formData.clientIds?.includes(client.id) || false}
+                        onChange={(e) => handleClientChange(client.id, e.target.checked)}
+                        className="rounded border-gray-300 dark:border-gray-600"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {client.companyName} ({client.TIN})
+                      </span>
+                    </label>
+                  ))
+                )}
               </>
             )}
           </div>
@@ -277,10 +374,10 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
 
         <Button 
           type="submit" 
-          disabled={loading || clients.length === 0}
+          disabled={loading || !clients || clients.length === 0}
           className="w-full"
         >
-          {loading ? 'Создание...' : clients.length === 0 ? 'Нет доступных клиентов' : 'Создать пользователя'}
+          {loading ? 'Создание...' : !clients || clients.length === 0 ? 'Нет доступных клиентов' : 'Создать пользователя'}
         </Button>
       </form>
     </div>

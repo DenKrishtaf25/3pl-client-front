@@ -19,6 +19,11 @@ export interface IClient {
     companyName: string
     createdAt: string
     updatedAt: string
+    _count?: {
+        users: number
+        stocks: number
+        registries: number
+    }
 }
 
 export interface IUserCreate {
@@ -57,3 +62,23 @@ export interface IAuthResponse {
 }
 
 export type TypeUserForm = Omit<IUser, 'id'> & { password?: string }
+
+export interface IPaginationMeta {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+}
+
+export interface IPaginatedResponse<T> {
+    data: T[]
+    meta: IPaginationMeta
+}
+
+export interface IClientQueryParams {
+    search?: string
+    page?: number
+    limit?: number
+    sortBy?: 'companyName' | 'createdAt'
+    sortOrder?: 'asc' | 'desc'
+}

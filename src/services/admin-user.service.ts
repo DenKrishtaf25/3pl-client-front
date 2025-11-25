@@ -39,8 +39,32 @@ class AdminUserService {
   }
 
   async getClients() {
-    const response = await axiosWithAuth.get<IClient[]>('/admin/clients')
-    return response.data
+    try {
+      const response = await axiosWithAuth.get<IClient[] | { data: IClient[]; meta?: unknown }>('/admin/clients')
+      
+      console.log('getClients response:', response.data);
+      
+      // Если ответ в пагинированном формате { data: [], meta: {} }
+      if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+        const paginatedResponse = response.data as { data: IClient[]; meta?: unknown };
+        if (Array.isArray(paginatedResponse.data)) {
+          console.log('Returning paginated data:', paginatedResponse.data.length, 'clients');
+          return paginatedResponse.data;
+        }
+      }
+      
+      // Если ответ - обычный массив
+      if (Array.isArray(response.data)) {
+        console.log('Returning array data:', response.data.length, 'clients');
+        return response.data;
+      }
+      
+      console.warn('Unexpected response format, returning empty array');
+      return [];
+    } catch (error) {
+      console.error('Error fetching clients in getClients:', error);
+      return [];
+    }
   }
 }
 
