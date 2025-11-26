@@ -5,6 +5,15 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
   const accessToken = req.cookies.get('accessToken')?.value
 
+  // Пропускаем статические файлы (изображения, шрифты и т.д.)
+  if (
+    pathname.startsWith('/images/') ||
+    pathname.startsWith('/fonts/') ||
+    pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)$/i)
+  ) {
+    return NextResponse.next()
+  }
+
   // Если пользователь не авторизован
   if (!accessToken && !pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/auth', req.url))

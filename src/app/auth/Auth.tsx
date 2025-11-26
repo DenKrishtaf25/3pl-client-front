@@ -1,12 +1,11 @@
 "use client";
-import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
+import { EyeCloseIcon, EyeIcon } from "@/icons";
 import GridShape from "@/components/common/GridShape";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import Image from "next/image";
@@ -15,11 +14,40 @@ import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
 export default function Auth() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [logoLoaded, setLogoLoaded] = useState(false);
+  const [minLoadTimePassed, setMinLoadTimePassed] = useState(false);
+
+  useEffect(() => {
+    // Минимальное время показа прелоадера для плавности (300ms)
+    const minTimer = setTimeout(() => {
+      setMinLoadTimePassed(true);
+    }, 300);
+
+    // Fallback: если логотип не загрузился за 2 секунды, все равно скрываем прелоадер
+    const fallbackTimer = setTimeout(() => {
+      setLogoLoaded(true);
+    }, 2000);
+
+    return () => {
+      clearTimeout(minTimer);
+      clearTimeout(fallbackTimer);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Скрываем прелоадер когда и логотип загружен, и прошло минимальное время
+    if (logoLoaded && minLoadTimePassed) {
+      const timer = setTimeout(() => {
+        setIsPageLoading(false);
+      }, 200); // Небольшая дополнительная задержка для плавного перехода
+      return () => clearTimeout(timer);
+    }
+  }, [logoLoaded, minLoadTimePassed]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,15 +65,58 @@ export default function Auth() {
     } catch (error) {
       console.error('Login error:', error);
       setError("Неверная почта или пароль");
-    } finally {
       setLoading(false);
     }
   };
+  // Компонент прелоадера
+  const Preloader = ({ message }: { message?: string }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white dark:bg-gray-900 transition-opacity duration-300">
+      <div className="flex flex-col items-center">
+          <div className="relative mb-6" style={{ width: 231, height: 48 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logo/logo.svg"
+              alt="ПЭК"
+              className="dark:hidden"
+              style={{ width: 231, height: 48 }}
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/images/logo/logo-dark.svg"
+              alt="ПЭК"
+              className="hidden dark:block"
+              style={{ width: 231, height: 48 }}
+            />
+          </div>
+        {message && (
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+            {message}
+          </p>
+        )}
+        <div className="flex space-x-2">
+          <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+          <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+          <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Прелоадер при загрузке страницы
+  if (isPageLoading) {
+    return <Preloader />;
+  }
+
+  // Прелоадер при входе в учетную запись
+  if (loading) {
+    return <Preloader message="Входим в систему..." />;
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* Левая часть - форма */}
       <div className="flex flex-col flex-1 lg:w-1/2 w-full">
-        <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
+        {/* <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
           <Link
             href="/"
             className="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -53,7 +124,7 @@ export default function Auth() {
             <ChevronLeftIcon />
             Back to dashboard
           </Link>
-        </div>
+        </div> */}
         <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
           <div>
             <div className="mb-5 sm:mb-8">
@@ -103,7 +174,7 @@ export default function Auth() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
+                  {/* <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Checkbox checked={isChecked} onChange={setIsChecked} />
                       <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
@@ -116,7 +187,7 @@ export default function Auth() {
                     >
                       Забыли пароль?
                     </Link>
-                  </div>
+                  </div> */}
                   {error && (
                     <p className="text-error-500 text-sm">{error}</p>
                   )}
@@ -142,11 +213,22 @@ export default function Auth() {
                 <GridShape />
                 <div className="flex flex-col items-center max-w-xs">
                   <Link href="/" className="block mb-4">
+                    {/* <Image
+                      width={231}
+                      height={48}
+                      src="/images/logo/logo.svg"
+                      alt="Logo"
+                      className="dark:hidden"
+                      priority
+                      unoptimized
+                    /> */}
                     <Image
                       width={231}
                       height={48}
                       src="/images/logo/logo-dark.svg"
                       alt="Logo"
+                      priority
+                      unoptimized
                     />
                   </Link>
                   <p className="text-center text-gray-400 dark:text-white/60">
