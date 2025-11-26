@@ -82,3 +82,12 @@ export interface IClientQueryParams {
     sortBy?: 'companyName' | 'createdAt'
     sortOrder?: 'asc' | 'desc'
 }
+
+export interface IStockQueryParams {
+    search?: string
+    page?: number
+    limit?: number
+    sortBy?: 'article' | 'quantity'
+    sortOrder?: 'asc' | 'desc'
+    clientTIN?: string // Может быть несколько через запятую: "123,456"
+}

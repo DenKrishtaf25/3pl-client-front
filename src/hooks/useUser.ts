@@ -16,7 +16,15 @@ export function useUser() {
         // Сохраняем в localStorage для быстрого доступа
         localStorage.setItem('user', JSON.stringify(userData));
       } catch (error: unknown) {
-        console.error('Failed to load user profile:', error);
+        // Проверяем, является ли это ошибкой сети (бэкенд не запущен)
+        const isNetworkError = error && typeof error === 'object' && 'code' in error && 
+          (error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED');
+        
+        // Логируем только если это не ошибка сети (чтобы не засорять консоль)
+        if (!isNetworkError) {
+          console.error('Failed to load user profile:', error);
+        }
+        
         const errorMessage = error instanceof Error ? error.message : 'Ошибка при загрузке профиля';
         setError(errorMessage);
         
