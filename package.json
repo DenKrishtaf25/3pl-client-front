@@ -36,6 +36,7 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.5",
     "react-slick": "^0.31.0",
+    "slick-carousel": "^1.8.1",
     "swiper": "^11.2.0",
     "tailwind-merge": "^2.6.0"
   },

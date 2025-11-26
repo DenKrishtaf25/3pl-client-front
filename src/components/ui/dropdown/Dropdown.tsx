@@ -22,17 +22,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
     if (
       dropdownRef.current &&
       !dropdownRef.current.contains(event.target as Node) &&
-      !(event.target as HTMLElement).closest('.dropdown-toggle')
+      !(event.target as HTMLElement).closest('.warehouse-select-button')
     ) {
       onClose();
     }
   };
 
-  document.addEventListener("mousedown", handleClickOutside);
+  if (isOpen) {
+    document.addEventListener("mousedown", handleClickOutside);
+  }
   return () => {
     document.removeEventListener("mousedown", handleClickOutside);
   };
-}, [onClose]);
+}, [onClose, isOpen]);
 
 
   if (!isOpen) return null;
