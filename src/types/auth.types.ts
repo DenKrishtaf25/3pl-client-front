@@ -91,3 +91,12 @@ export interface IStockQueryParams {
     sortOrder?: 'asc' | 'desc'
     clientTIN?: string // Может быть несколько через запятую: "123,456"
 }
+
+export interface IRegistryQueryParams {
+    search?: string
+    page?: number
+    limit?: number
+    sortBy?: 'orderNumber' | 'acceptanceDate' | 'unloadingDate'
+    sortOrder?: 'asc' | 'desc'
+    clientTIN?: string // Может быть несколько через запятую: "123,456"
+}
