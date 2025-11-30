@@ -103,3 +103,15 @@ export interface IRegistryQueryParams {
     dateFrom?: string // Дата в формате ISO (YYYY-MM-DD)
     dateTo?: string // Дата в формате ISO (YYYY-MM-DD)
 }
+
+export interface IOrderQueryParams {
+    search?: string
+    page?: number
+    limit?: number
+    sortBy?: 'orderNumber' | 'acceptanceDate' | 'unloadingDate'
+    sortOrder?: 'asc' | 'desc'
+    clientTIN?: string // Может быть несколько через запятую: "123,456"
+    dateField?: 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan' // Поле для фильтрации по дате
+    dateFrom?: string // Дата в формате ISO (YYYY-MM-DD)
+    dateTo?: string // Дата в формате ISO (YYYY-MM-DD)
+}

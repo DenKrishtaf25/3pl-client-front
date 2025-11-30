@@ -3,12 +3,13 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { registryService, IRegistry } from "@/services/registry.service";
 import { stockService, IStock } from "@/services/stock.service";
+import { orderService, IOrder } from "@/services/order.service";
 import { adminClientService } from "@/services/admin-client.service";
 import { IClient } from "@/types/auth.types";
 import Link from "next/link";
 
 interface SearchResult {
-  type: "registry" | "stock" | "client" | "warehouse";
+  type: "registry" | "stock" | "order" | "client" | "warehouse";
   id: string;
   title: string;
   subtitle?: string;
@@ -60,9 +61,10 @@ export default function UniversalSearch() {
     setIsOpen(true);
 
     try {
-      const [registriesResult, stocksResult, clientsResult] = await Promise.allSettled([
+      const [registriesResult, stocksResult, ordersResult, clientsResult] = await Promise.allSettled([
         registryService.getPaginated({ search: searchQuery, limit: 5, page: 1 }),
         stockService.getPaginated({ search: searchQuery, limit: 5, page: 1 }),
+        orderService.getPaginated({ search: searchQuery, limit: 5, page: 1 }),
         adminClientService.getPaginated({ search: searchQuery, limit: 5, page: 1 }),
       ]);
 
@@ -92,6 +94,20 @@ export default function UniversalSearch() {
             title: item.nomenclature || item.article,
             subtitle: `Артикул: ${item.article} • Склад: ${item.warehouse}`,
             url: "/stock",
+          });
+        });
+      }
+
+      // Обработка заказов
+      if (ordersResult.status === "fulfilled") {
+        const orders = ordersResult.value.data || [];
+        orders.forEach((item: IOrder) => {
+          allResults.push({
+            type: "order",
+            id: item.id,
+            title: `Заказ №${item.orderNumber}`,
+            subtitle: `${item.branch} • ${item.counterparty}`,
+            url: "/orders",
           });
         });
       }
@@ -197,6 +213,12 @@ export default function UniversalSearch() {
             <path d="M6 6h4M6 9h4" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
         );
+      case "order":
+        return (
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        );
       case "client":
         return (
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -217,9 +239,11 @@ export default function UniversalSearch() {
   const getTypeLabel = (type: SearchResult["type"]) => {
     switch (type) {
       case "registry":
-        return "Заказ";
+        return "Реестр";
       case "stock":
         return "Остаток";
+      case "order":
+        return "Заказ";
       case "client":
         return "Клиент";
       case "warehouse":

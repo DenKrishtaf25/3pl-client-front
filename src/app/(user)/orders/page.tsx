@@ -1,23 +1,21 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import BasicTableOne2 from "@/components/tables/BasicTableOne2";
+import OrdersTable from "@/components/tables/OrdersTable";
 import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "ПЭК:3PL",
-  description:
-    "ПЭК:3PL",
-  // other metadata
+  title: "ПЭК:3PL - Заказы",
+  description: "ПЭК:3PL - Управление заказами",
 };
 
-export default function BasicTables() {
+export default function OrdersPage() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Заказы" />
       <div className="space-y-6">
         <ComponentCard title="Данные заказов">
-          <BasicTableOne2 />
+          <OrdersTable />
         </ComponentCard>
       </div>
     </div>
