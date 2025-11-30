@@ -65,13 +65,23 @@ export default function RegistryTable() {
       };
       
       // Добавляем фильтры по дате, если они выбраны (формат ISO: YYYY-MM-DD)
+      // Используем локальную дату, а не UTC, чтобы избежать сдвига на день назад
       if (startDate || endDate) {
         requestParams.dateField = dateField;
         if (startDate) {
-          requestParams.dateFrom = startDate.toISOString().split('T')[0];
+          const year = startDate.getFullYear();
+          const month = String(startDate.getMonth() + 1).padStart(2, '0');
+          const day = String(startDate.getDate()).padStart(2, '0');
+          requestParams.dateFrom = `${year}-${month}-${day}`;
         }
         if (endDate) {
-          requestParams.dateTo = endDate.toISOString().split('T')[0];
+          // Нормализуем endDate к началу дня в локальном времени, чтобы избежать проблем с часовыми поясами
+          const normalizedEndDate = new Date(endDate);
+          normalizedEndDate.setHours(0, 0, 0, 0);
+          const year = normalizedEndDate.getFullYear();
+          const month = String(normalizedEndDate.getMonth() + 1).padStart(2, '0');
+          const day = String(normalizedEndDate.getDate()).padStart(2, '0');
+          requestParams.dateTo = `${year}-${month}-${day}`;
         }
       }
       
@@ -140,23 +150,25 @@ export default function RegistryTable() {
   };
 
   const formatDate = (dateString: string) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
+    // Используем UTC методы, чтобы избежать сдвига даты из-за часового пояса
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    return `${day}.${month}.${year}`;
   };
 
   const formatDateTime = (dateString: string) => {
+    if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    // Используем UTC методы для даты, но локальное время для времени
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${day}.${month}.${year}, ${hours}:${minutes}`;
   };
 
   const handleClearDateFilter = () => {
