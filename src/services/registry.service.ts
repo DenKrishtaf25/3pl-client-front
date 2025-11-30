@@ -68,8 +68,9 @@ class RegistryService {
       const response = await axiosWithAuth.get<IPaginatedResponse<IRegistry> | IRegistry[]>(url);
       
       // Получаем данные для обработки
-      const responseData = Array.isArray(response.data) ? response.data : (response.data as any)?.data;
-      const responseMeta = Array.isArray(response.data) ? null : (response.data as any)?.meta;
+      const responseData = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data as IPaginatedResponse<IRegistry>)?.data;
       
       // Логирование для проверки фильтра по дате
       if (params?.dateField && (params?.dateFrom || params?.dateTo) && responseData && responseData.length > 0) {
@@ -93,7 +94,7 @@ class RegistryService {
         });
         
         // Проверяем ВСЕ записи и выводим детальную информацию
-        const allDatesInfo = responseData.map((item: any, index: number) => {
+        const allDatesInfo = responseData.map((item: IRegistry, index: number) => {
           const rawValue = item[dateFieldName];
           const itemDateStr = getDateString(rawValue);
           const itemDate = rawValue ? new Date(rawValue) : null;
@@ -114,7 +115,7 @@ class RegistryService {
         console.log('📋 Все записи с датами:', allDatesInfo);
         
         // Проверяем все записи (сравниваем только даты без времени)
-        const invalidDates = responseData.filter((item: any) => {
+        const invalidDates = responseData.filter((item: IRegistry) => {
           const itemDateStr = getDateString(item[dateFieldName]);
           if (!itemDateStr) return true;
           if (dateFromStr && itemDateStr < dateFromStr) return true;
@@ -124,7 +125,7 @@ class RegistryService {
         
         if (invalidDates.length > 0) {
           console.warn(`⚠️ Найдено ${invalidDates.length} записей вне диапазона фильтра!`);
-          console.warn('Все несоответствующие записи:', invalidDates.map((item: any) => ({
+          console.warn('Все несоответствующие записи:', invalidDates.map((item: IRegistry) => ({
             orderNumber: item.orderNumber,
             сырое_значение: item[dateFieldName],
             дата_YYYY_MM_DD: getDateString(item[dateFieldName]) || 'нет даты',

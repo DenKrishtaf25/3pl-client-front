@@ -23,7 +23,9 @@ import {
   Warehouse,
   CreditCard,
   MessageCircle,
-  UserCircle
+  UserCircle,
+  Lock,
+  ExternalLink
 
 } from "lucide-react";
 // import SidebarWidget from "./SidebarWidget";
@@ -33,6 +35,7 @@ type NavItem = {
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  disabled?: boolean;
 };
 
 const navItems: NavItem[] = [
@@ -76,16 +79,19 @@ const othersItems: NavItem[] = [
         { name: "Финансовые претензии", path: "/finance", pro: false },
         { name: "Рекламации", path: "/complaints", pro: false },
     ],
+    disabled: true,
   },
   {
     icon: <PackagePlus strokeWidth={1.5} />,
     name: "Дополнительные услуги",
     path: "/a",
+    disabled: true,
   },
   {
     icon: <Archive strokeWidth={1.5} />,
     name: "Документы",
     path: "/a",
+    disabled: true,
   },
 ];
 
@@ -104,11 +110,12 @@ const referenceItems: NavItem[] = [
     icon: <CreditCard strokeWidth={1.5} />,
     name: "Цены и услуги",
     path: "/a",
+    disabled: true,
   },
   {
     icon: <MessageCircle strokeWidth={1.5} />,
     name: "Контакты",
-    path: "/a",
+    path: "/contacts",
   },
 ];
 
@@ -138,12 +145,13 @@ const AppSidebar: React.FC = () => {
         <li key={nav.name}>
           {nav.subItems ? (
             <button
-              onClick={() => handleSubmenuToggle(index, menuType)}
+              onClick={() => !nav.disabled && handleSubmenuToggle(index, menuType)}
+              disabled={nav.disabled}
               className={`menu-item group  ${
                 openSubmenu?.type === menuType && openSubmenu?.index === index
                   ? "menu-item-active"
                   : "menu-item-inactive"
-              } cursor-pointer ${
+              } ${nav.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${
                 !isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "lg:justify-start"
@@ -159,9 +167,14 @@ const AppSidebar: React.FC = () => {
                 {nav.icon}
               </span>
               {(isExpanded || isHovered || isMobileOpen) && (
-                <span className={`menu-item-text`}>{nav.name}</span>
+                <span className={`w-full menu-item-text flex items-center gap-2 justify-between`}>
+                  {nav.name}
+                  {nav.disabled && (
+                    <Lock className="w-3.5 h-3.5 text-gray-400" strokeWidth={2} />
+                  )}
+                </span>
               )}
-              {(isExpanded || isHovered || isMobileOpen) && (
+              {(isExpanded || isHovered || isMobileOpen) && !nav.disabled && (
                 <ChevronDownIcon
                   className={`ml-auto w-5 h-5 transition-transform duration-200  ${
                     openSubmenu?.type === menuType &&
@@ -174,28 +187,51 @@ const AppSidebar: React.FC = () => {
             </button>
           ) : (
             nav.path && (
-              <Link
-                href={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                }`}
-              >
-                <span
-                  className={`${
-                    isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
+              nav.disabled ? (
+                <div
+                  className={`menu-item group menu-item-inactive opacity-50 cursor-not-allowed`}
+                >
+                  <span className="menu-item-icon-inactive">
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className={`w-full menu-item-text flex items-center gap-2 justify-between`}>
+                      {nav.name}
+                      <Lock className="w-3.5 h-3.5 text-gray-400" strokeWidth={2} />
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href={nav.path}
+                  target={nav.path.startsWith('http') ? '_blank' : undefined}
+                  rel={nav.path.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  className={`menu-item group ${
+                    isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
                   }`}
                 >
-                  {nav.icon}
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className={`menu-item-text`}>{nav.name}</span>
-                )}
-              </Link>
+                  <span
+                    className={`${
+                      isActive(nav.path)
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
+                    }`}
+                  >
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className={`menu-item-text flex items-center gap-2 w-full justify-between ${nav.path.startsWith('http') ? 'justify-between' : ''}`}>
+                      {nav.name}
+                      {nav.path.startsWith('http') && (
+                        <ExternalLink className="w-3.5 h-3.5 text-gray-400" strokeWidth={2} />
+                      )}
+                    </span>
+                  )}
+                </Link>
+              )
             )
           )}
-          {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
+          {nav.subItems && !nav.disabled && (isExpanded || isHovered || isMobileOpen) && (
             <div
               ref={(el) => {
                 subMenuRefs.current[`${menuType}-${index}`] = el;

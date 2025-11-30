@@ -1,10 +1,17 @@
 "use client";
-import Image from "next/image";
 import React, { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useLogout } from "../../hooks/useLogout";
 import { useUser } from "@/hooks/useUser";
+
+const getInitials = (name: string) => {
+  const parts = name.split(" ");
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,14 +37,8 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         onClick={toggleDropdown} 
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
-        <span className="mr-3 overflow-hidden rounded-full h-11 w-11 bg-gray-200 dark:bg-gray-700">
-          <Image
-            width={44}
-            height={44}
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=e5e7eb&color=6b7280&size=128`}
-            alt="User"
-            className="w-full h-full object-cover"
-          />
+        <span className="mr-3 overflow-hidden rounded-full h-11 w-11 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
+          {getInitials(user?.name || 'Пользователь')}
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">{user?.name || 'Пользователь'}</span>
@@ -99,7 +100,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
                   fill=""
                 />
               </svg>
-              Редактировать профиль
+              Профиль
             </DropdownItem>
           </li>
           
