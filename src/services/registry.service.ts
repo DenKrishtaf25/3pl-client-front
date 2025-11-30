@@ -51,12 +51,25 @@ class RegistryService {
       if (params?.clientTIN) {
         queryParams.append('clientTIN', params.clientTIN);
       }
+      if (params?.dateField) {
+        queryParams.append('dateField', params.dateField);
+      }
+      if (params?.dateFrom) {
+        queryParams.append('dateFrom', params.dateFrom);
+      }
+      if (params?.dateTo) {
+        queryParams.append('dateTo', params.dateTo);
+      }
 
       const url = queryParams.toString() 
         ? `${this.BASE_URL}?${queryParams.toString()}`
         : this.BASE_URL;
 
       const response = await axiosWithAuth.get<IPaginatedResponse<IRegistry> | IRegistry[]>(url);
+      
+      // Получаем данные для обработки
+      const responseData = Array.isArray(response.data) ? response.data : (response.data as any)?.data;
+      const responseMeta = Array.isArray(response.data) ? null : (response.data as any)?.meta;
       
       // Если ответ - массив (старый формат), преобразуем в пагинированный формат
       if (Array.isArray(response.data)) {

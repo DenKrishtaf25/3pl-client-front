@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { ru } from "date-fns/locale";
@@ -13,7 +13,7 @@ import {
 } from "../ui/table";
 import { useSelectedClient } from "@/context/ClientContext";
 import { registryService, IRegistry } from "@/services/registry.service";
-import { IPaginationMeta } from "@/types/auth.types";
+import { IPaginationMeta, IRegistryQueryParams } from "@/types/auth.types";
 import Pagination from "./Pagination";
 import Input from "../form/input/InputField";
 
@@ -32,13 +32,10 @@ export default function RegistryTable() {
   const [sortBy, setSortBy] = useState<'orderNumber' | 'acceptanceDate' | 'unloadingDate'>('orderNumber');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
-  // Фильтры по дате (временное решение на фронтенде)
+  // Фильтры по дате
+  const [dateField, setDateField] = useState<'acceptanceDate' | 'unloadingDate' | 'shipmentPlan'>('acceptanceDate');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  
-  // Все загруженные данные (для фильтрации на фронте)
-  const [allRegistries, setAllRegistries] = useState<IRegistry[]>([]);
-  const [allMeta, setAllMeta] = useState<IPaginationMeta | null>(null);
 
   const loadRegistries = useCallback(async () => {
     try {
@@ -47,8 +44,8 @@ export default function RegistryTable() {
       
       // Если клиенты не выбраны, не делаем запрос
       if (selectedClients.length === 0) {
-        setAllRegistries([]);
-        setAllMeta(null);
+        setRegistries([]);
+        setMeta(null);
         setLoading(false);
         return;
       }
@@ -57,29 +54,42 @@ export default function RegistryTable() {
       const clientTINs = selectedClients.map(client => client.TIN);
       const clientTINParam = clientTINs.length > 0 ? clientTINs.join(',') : undefined;
       
-      // Загружаем данные с пагинацией, поиском и сортировкой
-      const response = await registryService.getPaginated({
+      // Формируем параметры запроса
+      const requestParams: IRegistryQueryParams = {
         search: search || undefined,
         page,
         limit,
         sortBy,
         sortOrder,
         clientTIN: clientTINParam,
-      });
+      };
+      
+      // Добавляем фильтры по дате, если они выбраны (формат ISO: YYYY-MM-DD)
+      if (startDate || endDate) {
+        requestParams.dateField = dateField;
+        if (startDate) {
+          requestParams.dateFrom = startDate.toISOString().split('T')[0];
+        }
+        if (endDate) {
+          requestParams.dateTo = endDate.toISOString().split('T')[0];
+        }
+      }
+      
+      // Загружаем данные с пагинацией, поиском, сортировкой и фильтрами по дате
+      const response = await registryService.getPaginated(requestParams);
       
       // Обработка пагинированного ответа
       if (response && 'data' in response && Array.isArray(response.data)) {
-        // Сохраняем все данные для фильтрации на фронте
-        setAllRegistries(response.data || []);
-        setAllMeta(response.meta || null);
+        setRegistries(response.data || []);
+        setMeta(response.meta || null);
       } else if (Array.isArray(response)) {
         // Fallback для старого API
-        setAllRegistries(response || []);
-        setAllMeta(null);
+        setRegistries(response || []);
+        setMeta(null);
       } else {
         console.warn('Unexpected response format:', response);
-        setAllRegistries([]);
-        setAllMeta(null);
+        setRegistries([]);
+        setMeta(null);
       }
     } catch (err: unknown) {
       // Проверяем, является ли это ошибкой сети (бэкенд не запущен)
@@ -98,73 +108,12 @@ export default function RegistryTable() {
         setError('Ошибка при загрузке данных');
       }
       
-      setAllRegistries([]);
-      setAllMeta(null);
+      setRegistries([]);
+      setMeta(null);
     } finally {
       setLoading(false);
     }
-  }, [selectedClients, search, page, limit, sortBy, sortOrder]);
-
-  // Фильтрация по дате на фронтенде
-  const filteredRegistries = useMemo(() => {
-    let filtered = [...allRegistries];
-    
-    // Фильтр по дате приемки (acceptanceDate)
-    if (startDate || endDate) {
-      filtered = filtered.filter(registry => {
-        const acceptanceDate = new Date(registry.acceptanceDate);
-        acceptanceDate.setHours(0, 0, 0, 0);
-        
-        if (startDate && endDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          return acceptanceDate >= start && acceptanceDate <= end;
-        } else if (startDate) {
-          const start = new Date(startDate);
-          start.setHours(0, 0, 0, 0);
-          return acceptanceDate >= start;
-        } else if (endDate) {
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-          return acceptanceDate <= end;
-        }
-        return true;
-      });
-    }
-    
-    return filtered;
-  }, [allRegistries, startDate, endDate]);
-
-  // Пагинация отфильтрованных данных
-  const paginatedRegistries = useMemo(() => {
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    return filteredRegistries.slice(start, end);
-  }, [filteredRegistries, page, limit]);
-
-  // Мета-информация для отфильтрованных данных
-  const filteredMeta = useMemo(() => {
-    if (!allMeta) return null;
-    
-    const total = filteredRegistries.length;
-    const totalPages = Math.ceil(total / limit);
-    
-    return {
-      ...allMeta,
-      total,
-      totalPages,
-      page,
-      limit,
-    };
-  }, [allMeta, filteredRegistries.length, page, limit]);
-
-  // Обновляем отображаемые данные
-  useEffect(() => {
-    setRegistries(paginatedRegistries);
-    setMeta(filteredMeta);
-  }, [paginatedRegistries, filteredMeta]);
+  }, [selectedClients, search, page, limit, sortBy, sortOrder, dateField, startDate, endDate]);
 
   useEffect(() => {
     loadRegistries();
@@ -213,7 +162,7 @@ export default function RegistryTable() {
   const handleClearDateFilter = () => {
     setStartDate(null);
     setEndDate(null);
-    setPage(1);
+    setPage(1); // Сбрасываем на первую страницу при очистке фильтра
   };
 
   return (
@@ -251,6 +200,22 @@ export default function RegistryTable() {
         
         {/* Фильтры по дате */}
         <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex flex-col">
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Поле для фильтрации</label>
+            <select
+              value={dateField}
+              onChange={(e) => {
+                setDateField(e.target.value as 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan');
+                setPage(1);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="acceptanceDate">Дата приемки</option>
+              <option value="unloadingDate">Дата выгрузки</option>
+              <option value="shipmentPlan">План отгрузки</option>
+            </select>
+          </div>
+          
           <div className="flex flex-col relative">
             <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата с</label>
             <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
