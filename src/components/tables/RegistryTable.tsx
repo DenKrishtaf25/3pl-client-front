@@ -1,5 +1,9 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ru } from "date-fns/locale";
+import { CalendarDays, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,11 +31,27 @@ export default function RegistryTable() {
   const [limit, setLimit] = useState(20);
   const [sortBy, setSortBy] = useState<'orderNumber' | 'acceptanceDate' | 'unloadingDate'>('orderNumber');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // Фильтры по дате (временное решение на фронтенде)
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  
+  // Все загруженные данные (для фильтрации на фронте)
+  const [allRegistries, setAllRegistries] = useState<IRegistry[]>([]);
+  const [allMeta, setAllMeta] = useState<IPaginationMeta | null>(null);
 
   const loadRegistries = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Если клиенты не выбраны, не делаем запрос
+      if (selectedClients.length === 0) {
+        setAllRegistries([]);
+        setAllMeta(null);
+        setLoading(false);
+        return;
+      }
       
       // Получаем ИНН выбранных клиентов
       const clientTINs = selectedClients.map(client => client.TIN);
@@ -49,16 +69,17 @@ export default function RegistryTable() {
       
       // Обработка пагинированного ответа
       if (response && 'data' in response && Array.isArray(response.data)) {
-        setRegistries(response.data || []);
-        setMeta(response.meta || null);
+        // Сохраняем все данные для фильтрации на фронте
+        setAllRegistries(response.data || []);
+        setAllMeta(response.meta || null);
       } else if (Array.isArray(response)) {
         // Fallback для старого API
-        setRegistries(response || []);
-        setMeta(null);
+        setAllRegistries(response || []);
+        setAllMeta(null);
       } else {
         console.warn('Unexpected response format:', response);
-        setRegistries([]);
-        setMeta(null);
+        setAllRegistries([]);
+        setAllMeta(null);
       }
     } catch (err: unknown) {
       // Проверяем, является ли это ошибкой сети (бэкенд не запущен)
@@ -77,12 +98,73 @@ export default function RegistryTable() {
         setError('Ошибка при загрузке данных');
       }
       
-      setRegistries([]);
-      setMeta(null);
+      setAllRegistries([]);
+      setAllMeta(null);
     } finally {
       setLoading(false);
     }
   }, [selectedClients, search, page, limit, sortBy, sortOrder]);
+
+  // Фильтрация по дате на фронтенде
+  const filteredRegistries = useMemo(() => {
+    let filtered = [...allRegistries];
+    
+    // Фильтр по дате приемки (acceptanceDate)
+    if (startDate || endDate) {
+      filtered = filtered.filter(registry => {
+        const acceptanceDate = new Date(registry.acceptanceDate);
+        acceptanceDate.setHours(0, 0, 0, 0);
+        
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          return acceptanceDate >= start && acceptanceDate <= end;
+        } else if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          return acceptanceDate >= start;
+        } else if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+          return acceptanceDate <= end;
+        }
+        return true;
+      });
+    }
+    
+    return filtered;
+  }, [allRegistries, startDate, endDate]);
+
+  // Пагинация отфильтрованных данных
+  const paginatedRegistries = useMemo(() => {
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    return filteredRegistries.slice(start, end);
+  }, [filteredRegistries, page, limit]);
+
+  // Мета-информация для отфильтрованных данных
+  const filteredMeta = useMemo(() => {
+    if (!allMeta) return null;
+    
+    const total = filteredRegistries.length;
+    const totalPages = Math.ceil(total / limit);
+    
+    return {
+      ...allMeta,
+      total,
+      totalPages,
+      page,
+      limit,
+    };
+  }, [allMeta, filteredRegistries.length, page, limit]);
+
+  // Обновляем отображаемые данные
+  useEffect(() => {
+    setRegistries(paginatedRegistries);
+    setMeta(filteredMeta);
+  }, [paginatedRegistries, filteredMeta]);
 
   useEffect(() => {
     loadRegistries();
@@ -128,10 +210,17 @@ export default function RegistryTable() {
     });
   };
 
+  const handleClearDateFilter = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setPage(1);
+  };
+
   return (
     <div className="space-y-4">
       {/* Панель поиска и фильтров */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col gap-4 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50 dark:bg-white/[0.02] p-4 rounded-t-xl">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 max-w-md">
           <Input
             type="text"
@@ -156,7 +245,60 @@ export default function RegistryTable() {
             <option value={20}>20</option>
             <option value={30}>30</option>
             <option value={50}>50</option>
-          </select>
+            </select>
+          </div>
+        </div>
+        
+        {/* Фильтры по дате */}
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex flex-col relative">
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата с</label>
+            <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+            <DatePicker
+              selected={startDate || undefined}
+              onChange={(date) => {
+                setStartDate(date);
+                setPage(1);
+              }}
+              selectsStart
+              startDate={startDate || undefined}
+              endDate={endDate || undefined}
+              placeholderText="Выберите дату"
+              dateFormat="dd.MM.yyyy"
+              locale={ru}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
+
+          <div className="flex flex-col relative">
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1">Дата по</label>
+            <CalendarDays className="w-4 h-4 absolute left-3 top-[38px] -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+            <DatePicker
+              selected={endDate || undefined}
+              onChange={(date) => {
+                setEndDate(date);
+                setPage(1);
+              }}
+              selectsEnd
+              startDate={startDate || undefined}
+              endDate={endDate || undefined}
+              minDate={startDate || undefined}
+              placeholderText="Выберите дату"
+              dateFormat="dd.MM.yyyy"
+              locale={ru}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
+
+          <div className="flex items-end gap-2">
+            <button
+              onClick={handleClearDateFilter}
+              className="flex gap-1 items-center px-3 py-2 text-sm bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors"
+            >
+              <X size={16} />
+              Очистить
+            </button>
+          </div>
         </div>
       </div>
 

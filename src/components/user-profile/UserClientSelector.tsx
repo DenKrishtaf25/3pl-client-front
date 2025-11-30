@@ -1,16 +1,39 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useSelectedClient } from "@/context/ClientContext";
+import Input from "../form/input/InputField";
 
 export default function UserClientSelector() {
   const { selectedClients, toggleClient, isClientSelected, allClients } = useSelectedClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Фильтрация клиентов по поисковому запросу (всегда вызываем useMemo, чтобы соблюдать правила хуков)
+  const filteredClients = useMemo(() => {
+    if (!allClients || allClients.length === 0) {
+      return [];
+    }
+    
+    if (!searchQuery.trim()) {
+      return allClients;
+    }
+    
+    const query = searchQuery.toLowerCase().trim();
+    return allClients.filter(client => 
+      client.companyName.toLowerCase().includes(query) ||
+      client.TIN.toLowerCase().includes(query)
+    );
+  }, [allClients, searchQuery]);
+
+  // Проверка, все ли отфильтрованные клиенты выбраны
+  const areAllFilteredSelected = filteredClients.length > 0 && 
+    filteredClients.every(client => isClientSelected(client.id));
 
   // Если клиентов нет, не показываем селектор
   if (!allClients || allClients.length === 0) {
     return null;
   }
-  
+
   // Если только один клиент, показываем только информацию (без выбора)
   if (allClients.length === 1) {
     return (
@@ -129,11 +152,59 @@ export default function UserClientSelector() {
             />
             <div className="absolute left-0 right-0 z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-700">
               <div className="p-2">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">
-                  Выберите клиентов
+                <div className="flex items-center justify-between mb-2">
+                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">
+                    Выберите клиентов
+                  </div>
+                  <div className="flex-1 max-w-xs ml-4">
+                    <Input
+                      type="text"
+                      placeholder="Поиск по имени или ИНН..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full text-sm"
+                    />
+                  </div>
                 </div>
+                
+                {/* Кнопка "Выбрать всех" */}
+                <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+                  <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      checked={areAllFilteredSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // Выбираем всех отфильтрованных клиентов
+                          filteredClients.forEach(client => {
+                            if (!isClientSelected(client.id)) {
+                              toggleClient(client);
+                            }
+                          });
+                        } else {
+                          // Снимаем выбор со всех отфильтрованных клиентов
+                          filteredClients.forEach(client => {
+                            if (isClientSelected(client.id)) {
+                              toggleClient(client);
+                            }
+                          });
+                        }
+                      }}
+                      className="w-4 h-4 text-brand-600 border-gray-300 rounded focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-700"
+                    />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {areAllFilteredSelected ? 'Снять выбор со всех' : 'Выбрать всех'}
+                    </span>
+                  </label>
+                </div>
+                
                 <div className="max-h-60 overflow-y-auto">
-                  {allClients.map((client) => (
+                  {filteredClients.length === 0 ? (
+                    <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                      Ничего не найдено
+                    </div>
+                  ) : (
+                    filteredClients.map((client) => (
                     <label
                       key={client.id}
                       className="flex items-start gap-3 px-3 py-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -153,7 +224,8 @@ export default function UserClientSelector() {
                         </div>
                       </div>
                     </label>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>

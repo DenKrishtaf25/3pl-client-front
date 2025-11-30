@@ -33,6 +33,14 @@ export default function BasicTableOne() {
       setLoading(true);
       setError(null);
       
+      // Если клиенты не выбраны, не делаем запрос
+      if (selectedClients.length === 0) {
+        setStocks([]);
+        setMeta(null);
+        setLoading(false);
+        return;
+      }
+      
       // Получаем ИНН выбранных клиентов
       const clientTINs = selectedClients.map(client => client.TIN);
       const clientTINParam = clientTINs.length > 0 ? clientTINs.join(',') : undefined;

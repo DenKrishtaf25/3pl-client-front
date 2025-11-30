@@ -8,6 +8,8 @@ interface ClientContextType {
   toggleClient: (client: IClient) => void;
   isClientSelected: (clientId: string) => boolean;
   allClients: IClient[];
+  selectAllClients: () => void;
+  deselectAllClients: () => void;
 }
 
 const ClientContext = createContext<ClientContextType | undefined>(undefined);
@@ -61,6 +63,18 @@ export function ClientProvider({ children }: { children: ReactNode }) {
     return selectedClients.some(c => c.id === clientId);
   };
 
+  const selectAllClients = () => {
+    if (user?.clients) {
+      setSelectedClients(user.clients);
+      localStorage.setItem('selectedClientIds', JSON.stringify(user.clients.map(c => c.id)));
+    }
+  };
+
+  const deselectAllClients = () => {
+    setSelectedClients([]);
+    localStorage.setItem('selectedClientIds', JSON.stringify([]));
+  };
+
   return (
     <ClientContext.Provider
       value={{
@@ -68,6 +82,8 @@ export function ClientProvider({ children }: { children: ReactNode }) {
         toggleClient,
         isClientSelected,
         allClients: user?.clients || [],
+        selectAllClients,
+        deselectAllClients,
       }}
     >
       {children}

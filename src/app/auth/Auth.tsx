@@ -6,13 +6,11 @@ import { EyeCloseIcon, EyeIcon } from "@/icons";
 import GridShape from "@/components/common/GridShape";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { authService } from "@/services/auth.service";
 import Image from "next/image";
 import ThemeTogglerTwo from "@/components/common/ThemeTogglerTwo";
 
 export default function Auth() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,8 +58,14 @@ export default function Auth() {
       sessionStorage.removeItem('sessionExpiredShown');
       
       const role = data?.user?.role;
-      if (role === "ADMIN") router.replace("/admin");
-      else router.replace("/");
+      
+      // Используем полную перезагрузку страницы (как в админке) для гарантированного
+      // размонтирования компонента Auth и исчезновения прелоадера
+      if (role === "ADMIN") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/";
+      }
     } catch (error) {
       console.error('Login error:', error);
       setError("Неверная почта или пароль");
