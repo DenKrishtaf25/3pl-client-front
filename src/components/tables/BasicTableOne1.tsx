@@ -12,8 +12,13 @@ import { stockService, IStock } from "@/services/stock.service";
 import { IPaginationMeta } from "@/types/auth.types";
 import Pagination from "./Pagination";
 import Input from "../form/input/InputField";
+import { exportToExcel } from "@/utils/excelExport";
 
-export default function BasicTableOne() {
+interface BasicTableOneProps {
+  onExportReady?: (exportFn: () => void) => void;
+}
+
+export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}) {
   const { selectedClients } = useSelectedClient();
   const [stocks, setStocks] = useState<IStock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +111,23 @@ export default function BasicTableOne() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  const handleExport = useCallback(() => {
+    if (stocks.length === 0) {
+      alert('Нет данных для экспорта');
+      return;
+    }
+
+    // Форматируем данные для экспорта
+    const exportData = stocks.map((stock) => ({
+      'Склад': stock.warehouse,
+      'Номенклатура': stock.nomenclature,
+      'Артикул': stock.article,
+      'Остаток': stock.quantity,
+    }));
+
+    exportToExcel(exportData, `Товарный_запас_${new Date().toISOString().split('T')[0]}`);
+  }, [stocks]);
+
   const handleSort = (field: 'article' | 'quantity') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -115,6 +137,13 @@ export default function BasicTableOne() {
     }
     setPage(1);
   };
+
+  // Передаем функцию экспорта наружу
+  useEffect(() => {
+    if (onExportReady) {
+      onExportReady(handleExport);
+    }
+  }, [onExportReady, handleExport]);
 
   return (
     <div className="space-y-4">

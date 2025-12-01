@@ -7,11 +7,11 @@ export interface IOrder {
   orderType: string;
   orderNumber: string;
   kisNumber: string;
-  unloadingDate: string;
+  exportDate: string; // Дата выгрузки
   status: string;
   counterparty: string;
   acceptanceDate: string;
-  shipmentPlan: string;
+  shipmentDate: string; // Дата отгрузки
   packagesPlanned: number;
   packagesActual: number;
   linesPlanned: number;

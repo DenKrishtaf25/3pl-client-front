@@ -16,8 +16,13 @@ import { orderService, IOrder } from "@/services/order.service";
 import { IPaginationMeta, IOrderQueryParams } from "@/types/auth.types";
 import Pagination from "./Pagination";
 import Input from "../form/input/InputField";
+import { exportToExcel } from "@/utils/excelExport";
 
-export default function OrdersTable() {
+interface OrdersTableProps {
+  onExportReady?: (exportFn: () => void) => void;
+}
+
+export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
   const { selectedClients } = useSelectedClient();
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +34,11 @@ export default function OrdersTable() {
   const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [sortBy, setSortBy] = useState<'orderNumber' | 'acceptanceDate' | 'unloadingDate'>('orderNumber');
+  const [sortBy, setSortBy] = useState<'orderNumber' | 'acceptanceDate' | 'exportDate' | 'shipmentDate'>('orderNumber');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   // Фильтры по дате
-  const [dateField, setDateField] = useState<'acceptanceDate' | 'unloadingDate' | 'shipmentPlan'>('acceptanceDate');
+  const [dateField, setDateField] = useState<'acceptanceDate' | 'exportDate' | 'shipmentDate'>('acceptanceDate');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
 
@@ -125,30 +130,6 @@ export default function OrdersTable() {
     }
   }, [selectedClients, search, page, limit, sortBy, sortOrder, dateField, startDate, endDate]);
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
-
-  // Debounce для поиска
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1); // Сбрасываем на первую страницу при поиске
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchInput]);
-
-  const handleSort = (field: 'orderNumber' | 'acceptanceDate' | 'unloadingDate') => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('asc');
-    }
-    setPage(1);
-  };
-
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -169,6 +150,63 @@ export default function OrdersTable() {
     const hours = String(date.getUTCHours()).padStart(2, '0');
     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
     return `${day}.${month}.${year}, ${hours}:${minutes}`;
+  };
+
+  const handleExport = useCallback(() => {
+    if (orders.length === 0) {
+      alert('Нет данных для экспорта');
+      return;
+    }
+
+    // Форматируем данные для экспорта
+    const exportData = orders.map((order) => ({
+      'Филиал': order.branch,
+      'Тип': order.orderType,
+      '№ заказа': order.orderNumber,
+      '№ КИС': order.kisNumber || '',
+      'Дата выгрузки': formatDate(order.exportDate),
+      'Статус': order.status,
+      'Контрагент': order.counterparty,
+      'Дата приемки': formatDate(order.acceptanceDate),
+      'Дата отгрузки': formatDateTime(order.shipmentDate),
+      'Упаковок план': order.packagesPlanned,
+      'Упаковок факт': order.packagesActual,
+      'Строк план': order.linesPlanned,
+      'Строк факт': order.linesActual,
+    }));
+
+    exportToExcel(exportData, `Заказы_${new Date().toISOString().split('T')[0]}`);
+  }, [orders]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  // Передаем функцию экспорта наружу
+  useEffect(() => {
+    if (onExportReady) {
+      onExportReady(handleExport);
+    }
+  }, [onExportReady, handleExport]);
+
+  // Debounce для поиска
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Сбрасываем на первую страницу при поиске
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const handleSort = (field: 'orderNumber' | 'acceptanceDate' | 'exportDate' | 'shipmentDate') => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
   };
 
   const handleClearDateFilter = () => {
@@ -217,14 +255,14 @@ export default function OrdersTable() {
             <select
               value={dateField}
               onChange={(e) => {
-                setDateField(e.target.value as 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan');
+                setDateField(e.target.value as 'acceptanceDate' | 'exportDate' | 'shipmentDate');
                 setPage(1);
               }}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white"
             >
               <option value="acceptanceDate">Дата приемки</option>
-              <option value="unloadingDate">Дата выгрузки</option>
-              <option value="shipmentPlan">План отгрузки</option>
+              <option value="exportDate">Дата выгрузки</option>
+              <option value="shipmentDate">Дата отгрузки</option>
             </select>
           </div>
           
@@ -326,11 +364,11 @@ export default function OrdersTable() {
                 >
                   <button
                     type="button"
-                    onClick={() => handleSort('unloadingDate')}
+                    onClick={() => handleSort('exportDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
                     Дата выгрузки
-                    {sortBy === 'unloadingDate' && (
+                    {sortBy === 'exportDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
                       </span>
@@ -370,7 +408,18 @@ export default function OrdersTable() {
                   isHeader
                   className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                 >
-                  План отгрузки
+                  <button
+                    type="button"
+                    onClick={() => handleSort('shipmentDate')}
+                    className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Дата отгрузки
+                    {sortBy === 'shipmentDate' && (
+                      <span className="text-brand-500">
+                        {sortOrder === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </button>
                 </TableCell>
                 <TableCell
                   isHeader
@@ -447,7 +496,7 @@ export default function OrdersTable() {
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatDate(order.unloadingDate)}
+                        {formatDate(order.exportDate)}
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
@@ -465,7 +514,7 @@ export default function OrdersTable() {
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatDateTime(order.shipmentPlan)}
+                        {formatDateTime(order.shipmentDate)}
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-center text-theme-xs dark:text-gray-400 whitespace-nowrap">

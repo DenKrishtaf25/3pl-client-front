@@ -16,8 +16,13 @@ import { registryService, IRegistry } from "@/services/registry.service";
 import { IPaginationMeta, IRegistryQueryParams } from "@/types/auth.types";
 import Pagination from "./Pagination";
 import Input from "../form/input/InputField";
+import { exportToExcel } from "@/utils/excelExport";
 
-export default function RegistryTable() {
+interface RegistryTableProps {
+  onExportReady?: (exportFn: () => void) => void;
+}
+
+export default function RegistryTable({ onExportReady }: RegistryTableProps = {}) {
   const { selectedClients } = useSelectedClient();
   const [registries, setRegistries] = useState<IRegistry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,30 +130,6 @@ export default function RegistryTable() {
     }
   }, [selectedClients, search, page, limit, sortBy, sortOrder, dateField, startDate, endDate]);
 
-  useEffect(() => {
-    loadRegistries();
-  }, [loadRegistries]);
-
-  // Debounce для поиска
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1); // Сбрасываем на первую страницу при поиске
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchInput]);
-
-  const handleSort = (field: 'orderNumber' | 'acceptanceDate' | 'unloadingDate') => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('asc');
-    }
-    setPage(1);
-  };
-
   const formatDate = (dateString: string) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -169,6 +150,63 @@ export default function RegistryTable() {
     const hours = String(date.getUTCHours()).padStart(2, '0');
     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
     return `${day}.${month}.${year}, ${hours}:${minutes}`;
+  };
+
+  const handleExport = useCallback(() => {
+    if (registries.length === 0) {
+      alert('Нет данных для экспорта');
+      return;
+    }
+
+    // Форматируем данные для экспорта
+    const exportData = registries.map((registry) => ({
+      'Филиал': registry.branch,
+      'Тип': registry.orderType,
+      '№ заказа': registry.orderNumber,
+      '№ КИС': registry.kisNumber || '',
+      'Дата выгрузки': formatDate(registry.unloadingDate),
+      'Статус': registry.status,
+      'Контрагент': registry.counterparty,
+      'Дата приемки': formatDate(registry.acceptanceDate),
+      'План отгрузки': formatDateTime(registry.shipmentPlan),
+      'Упаковок план': registry.packagesPlanned,
+      'Упаковок факт': registry.packagesActual,
+      'Строк план': registry.linesPlanned,
+      'Строк факт': registry.linesActual,
+    }));
+
+    exportToExcel(exportData, `Реестр_${new Date().toISOString().split('T')[0]}`);
+  }, [registries]);
+
+  useEffect(() => {
+    loadRegistries();
+  }, [loadRegistries]);
+
+  // Передаем функцию экспорта наружу
+  useEffect(() => {
+    if (onExportReady) {
+      onExportReady(handleExport);
+    }
+  }, [onExportReady, handleExport]);
+
+  // Debounce для поиска
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1); // Сбрасываем на первую страницу при поиске
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  const handleSort = (field: 'orderNumber' | 'acceptanceDate' | 'unloadingDate') => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
   };
 
   const handleClearDateFilter = () => {
@@ -323,7 +361,18 @@ export default function RegistryTable() {
                 isHeader
                 className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
               >
-                Выгрузка
+                <button
+                  type="button"
+                  onClick={() => handleSort('unloadingDate')}
+                  className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                  Выгрузка
+                  {sortBy === 'unloadingDate' && (
+                    <span className="text-brand-500">
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </button>
               </TableCell>
               <TableCell
                 isHeader
@@ -375,25 +424,25 @@ export default function RegistryTable() {
                 isHeader
                 className="px-3 py-2 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400 whitespace-nowrap"
               >
-                М.пл
+                Упаковок план
               </TableCell>
               <TableCell
                 isHeader
                 className="px-3 py-2 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400 whitespace-nowrap"
               >
-                М.фк
+                Упаковок факт
               </TableCell>
               <TableCell
                 isHeader
                 className="px-3 py-2 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400 whitespace-nowrap"
               >
-                С.пл
+                Строк план
               </TableCell>
               <TableCell
                 isHeader
                 className="px-3 py-2 font-medium text-gray-500 text-center text-theme-xs dark:text-gray-400 whitespace-nowrap"
               >
-                С.фк
+                Строк факт
               </TableCell>
             </TableRow>
           </TableHeader>
