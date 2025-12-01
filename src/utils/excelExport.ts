@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
  * @param filename - имя файла (без расширения)
  * @param headers - массив заголовков колонок (опционально)
  */
-export function exportToExcel<T extends Record<string, any>>(
+export function exportToExcel<T extends Record<string, string | number | null | undefined>>(
   data: T[],
   filename: string,
   headers?: { [key: string]: string }
@@ -18,7 +18,7 @@ export function exportToExcel<T extends Record<string, any>>(
 
   // Преобразуем данные, заменяя ключи на заголовки если они указаны
   const formattedData = data.map((item) => {
-    const formatted: Record<string, any> = {};
+    const formatted: Record<string, string | number | null | undefined> = {};
     Object.keys(item).forEach((key) => {
       const header = headers?.[key] || key;
       formatted[header] = item[key];

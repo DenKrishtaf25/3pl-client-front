@@ -67,11 +67,6 @@ class OrderService {
 
       const response = await axiosWithAuth.get<IPaginatedResponse<IOrder> | IOrder[]>(url);
       
-      // Получаем данные для обработки
-      const responseData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data as IPaginatedResponse<IOrder>)?.data;
-      
       // Если ответ - массив (старый формат), преобразуем в пагинированный формат
       if (Array.isArray(response.data)) {
         return {
