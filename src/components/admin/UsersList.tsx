@@ -21,6 +21,7 @@ export default function UsersList() {
   const [newPassword, setNewPassword] = useState('');
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
+  const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -277,18 +278,72 @@ export default function UsersList() {
                   {user.name || '-'}
                 </td>
                 <td className="px-6 py-4 text-sm">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                      user.role === 'ADMIN'
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                    }`}
-                  >
-                    {user.role}
-                  </span>
+                  <div className="flex flex-col items-start gap-1 relative">
+                    {user.clients && clients.length > 0 && user.clients.length === clients.length && (
+                      <div className="w-3 h-3 rounded-full bg-orange-500 flex items-center justify-center absolute top-[-8px] left-[-5px]">
+                        <span className="text-[8px] text-white font-bold leading-none">S</span>
+                      </div>
+                    )}
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                        user.role === 'ADMIN'
+                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                      }`}
+                    >
+                      {user.role}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                  {user.clients?.map(c => c.companyName).join(', ') || '-'}
+                  {user.clients && user.clients.length > 0 ? (
+                    <div className="relative flex flex-wrap gap-1.5 items-center max-w-md">
+                      {user.clients.slice(0, 2).map((client, idx) => (
+                        <span
+                          key={client.id || idx}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                        >
+                          {client.companyName}
+                        </span>
+                      ))}
+                      {user.clients.length > 2 && (
+                        <div
+                          className="relative inline-block"
+                          onMouseEnter={() => setHoveredUserId(user.id)}
+                          onMouseLeave={() => setHoveredUserId(null)}
+                        >
+                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                            +{user.clients.length - 2} еще
+                          </span>
+                          {hoveredUserId === user.id && (
+                            <div
+                              className="absolute left-0 top-full pt-1 z-50 min-w-[200px] max-w-[300px] rounded-xl border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-900 py-2"
+                            >
+                              <div className="px-3 py-1.5 border-b border-gray-200 dark:border-gray-800">
+                                <p className="text-[10px] font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                                  Остальные клиенты ({user.clients.length - 2})
+                                </p>
+                              </div>
+                              <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                {user.clients.slice(2).map((client, idx) => (
+                                  <div
+                                    key={client.id || idx}
+                                    className="px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                  >
+                                    <p className="text-xs text-gray-800 dark:text-gray-200">
+                                      {client.companyName}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    '-'
+                  )}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
                   <div className="flex gap-2">

@@ -22,7 +22,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
     if (
       dropdownRef.current &&
       !dropdownRef.current.contains(event.target as Node) &&
-      !(event.target as HTMLElement).closest('.warehouse-select-button')
+      !(event.target as HTMLElement).closest('.warehouse-select-button') &&
+      !(event.target as HTMLElement).closest('.client-select-button')
     ) {
       onClose();
     }

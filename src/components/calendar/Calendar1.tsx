@@ -15,6 +15,10 @@ import { useModal } from "@/hooks/useModal";
 import { Modal } from "@/components/ui/modal";
 import { bitrixService } from "@/services/bitrix.service";
 import { IInventoryRequest, IBitrixTask } from "@/types/inventory.types";
+import { useUser } from "@/hooks/useUser";
+import { Dropdown } from "@/components/ui/dropdown/Dropdown";
+import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
+import { ChevronDownIcon } from "@/icons";
 
 interface CalendarEvent extends EventInput {
   extendedProps: {
@@ -35,6 +39,7 @@ const Calendar: React.FC = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const calendarRef = useRef<FullCalendar>(null);
   const { isOpen, openModal, closeModal } = useModal();
+  const { user } = useUser();
   
   // Состояние для заявки на инвентаризацию
   const [inventoryRequest, setInventoryRequest] = useState<IInventoryRequest>({
@@ -47,6 +52,9 @@ const Calendar: React.FC = () => {
     email: "",
     comment: ""
   });
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+  const clientDropdownRef = useRef<HTMLDivElement>(null);
   const [isInventoryMode, setIsInventoryMode] = useState(false);
   const [bitrixLoading, setBitrixLoading] = useState(false);
   const [bitrixError, setBitrixError] = useState<string | null>(null);
@@ -228,14 +236,16 @@ const Calendar: React.FC = () => {
     setEventLevel("");
     setSelectedEvent(null);
     setIsInventoryMode(false);
+    setSelectedClientId("");
+    setIsClientDropdownOpen(false);
     setInventoryRequest({
       companyName: "",
       tin: "",
       inventoryDate: "",
       warehouse: "",
-      contactPerson: "",
+      contactPerson: user?.name || "",
       phone: "",
-      email: "",
+      email: user?.email || "",
       comment: ""
     });
     setBitrixError(null);
@@ -248,17 +258,9 @@ const Calendar: React.FC = () => {
 
     try {
       // Валидация обязательных полей
-      if (!inventoryRequest.companyName || !inventoryRequest.tin || !inventoryRequest.inventoryDate || 
+      if (!selectedClientId || !inventoryRequest.inventoryDate || 
           !inventoryRequest.warehouse || !inventoryRequest.contactPerson || !inventoryRequest.phone || !inventoryRequest.email) {
         setBitrixError('Все поля обязательны для заполнения');
-        setBitrixLoading(false);
-        return;
-      }
-
-      // Валидация ИНН
-      const tinRegex = /^\d{10}$|^\d{12}$/;
-      if (!tinRegex.test(inventoryRequest.tin)) {
-        setBitrixError('ИНН должен содержать 10 или 12 цифр');
         setBitrixLoading(false);
         return;
       }
@@ -323,6 +325,14 @@ const Calendar: React.FC = () => {
               click: () => {
                 resetModalFields();
                 setIsInventoryMode(true);
+                // Предзаполняем данные пользователя при открытии формы
+                if (user) {
+                  setInventoryRequest(prev => ({
+                    ...prev,
+                    contactPerson: user.name || "",
+                    email: user.email || ""
+                  }));
+                }
                 openModal();
               },
             },
@@ -376,31 +386,57 @@ const Calendar: React.FC = () => {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      Название компании <span className="text-red-500">*</span>
+                      Клиент <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={inventoryRequest.companyName}
-                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, companyName: e.target.value }))}
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      placeholder="ООО Рога и копыта"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
-                      ИНН <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={inventoryRequest.tin}
-                      onChange={(e) => setInventoryRequest(prev => ({ ...prev, tin: e.target.value }))}
-                      className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                      placeholder="1234567890"
-                      maxLength={12}
-                    />
+                    <div className="relative" ref={clientDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsClientDropdownOpen(!isClientDropdownOpen);
+                        }}
+                        className="client-select-button w-full px-4 py-3 pr-11 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all shadow-sm hover:shadow-md cursor-pointer text-left flex items-center justify-between h-11"
+                      >
+                        <span className={selectedClientId ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}>
+                          {selectedClientId 
+                            ? `${user?.clients?.find(c => c.id === selectedClientId)?.companyName} (ИНН: ${user?.clients?.find(c => c.id === selectedClientId)?.TIN})`
+                            : "Выберите клиента"
+                          }
+                        </span>
+                        <span className={`absolute right-3 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isClientDropdownOpen ? 'rotate-180' : ''}`}>
+                          <ChevronDownIcon />
+                        </span>
+                      </button>
+                      <Dropdown
+                        isOpen={isClientDropdownOpen}
+                        onClose={() => setIsClientDropdownOpen(false)}
+                        className="left-0 right-0 w-full mt-1 max-h-60 overflow-y-auto"
+                      >
+                        {user?.clients?.map((client) => (
+                          <DropdownItem
+                            key={client.id}
+                            onClick={() => {
+                              setSelectedClientId(client.id);
+                              setInventoryRequest(prev => ({
+                                ...prev,
+                                companyName: client.companyName,
+                                tin: client.TIN
+                              }));
+                              setIsClientDropdownOpen(false);
+                            }}
+                            baseClassName="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-brand-50 dark:hover:bg-brand-900/20 hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-pointer"
+                            className={selectedClientId === client.id ? "bg-brand-50 dark:bg-brand-900/20 text-brand-600 dark:text-brand-400 font-medium" : ""}
+                          >
+                            <div>
+                              <div className="font-medium">{client.companyName}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">ИНН: {client.TIN}</div>
+                            </div>
+                          </DropdownItem>
+                        ))}
+                      </Dropdown>
+                    </div>
                   </div>
 
                   <div>
@@ -574,7 +610,7 @@ const Calendar: React.FC = () => {
                 type="button"
                 className="btn btn-success btn-create-inventory flex w-full justify-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto"
               >
-                {bitrixLoading ? "Создание заявки..." : "Создать заявку в Битрикс"}
+                {bitrixLoading ? "Создание заявки..." : "Создать заявку"}
               </button>
             ) : (
               <button
