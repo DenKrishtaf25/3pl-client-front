@@ -42,6 +42,15 @@ class StockService {
       if (params?.clientTIN) {
         queryParams.append('clientTIN', params.clientTIN);
       }
+      if (params?.warehouse) {
+        queryParams.append('warehouse', params.warehouse);
+      }
+      if (params?.nomenclature) {
+        queryParams.append('nomenclature', params.nomenclature);
+      }
+      if (params?.article) {
+        queryParams.append('article', params.article);
+      }
 
       const url = queryParams.toString() 
         ? `${this.BASE_URL}?${queryParams.toString()}`

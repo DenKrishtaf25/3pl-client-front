@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,10 @@ import { IPaginationMeta } from "@/types/auth.types";
 import Pagination from "./Pagination";
 import Input from "../form/input/InputField";
 import { exportToExcel } from "@/utils/excelExport";
+import { Dropdown } from "../ui/dropdown/Dropdown";
+import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
+import Select from "../form/Select";
 
 interface BasicTableOneProps {
   onExportReady?: (exportFn: () => void) => void;
@@ -26,12 +30,25 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
   const [meta, setMeta] = useState<IPaginationMeta | null>(null);
 
   // Пагинация и фильтры
-  const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [sortBy, setSortBy] = useState<'article' | 'quantity'>('article');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // Новые фильтры
+  const [warehouse, setWarehouse] = useState('');
+  const [nomenclature, setNomenclature] = useState('');
+  const [article, setArticle] = useState('');
+  const [warehouseInput, setWarehouseInput] = useState('');
+  const [nomenclatureInput, setNomenclatureInput] = useState('');
+  const [articleInput, setArticleInput] = useState('');
+  
+  // UI состояния для фильтров
+  const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
+  const [activeFilterInput, setActiveFilterInput] = useState<'warehouse' | 'nomenclature' | 'article' | null>(null);
+  const filtersDropdownRef = useRef<HTMLDivElement>(null);
+  const [isLimitDropdownOpen, setIsLimitDropdownOpen] = useState(false);
+  const limitDropdownRef = useRef<HTMLDivElement>(null);
 
   const loadStocks = useCallback(async () => {
     try {
@@ -51,14 +68,18 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
       const clientTINParam = clientTINs.length > 0 ? clientTINs.join(',') : undefined;
       
       // Загружаем данные с пагинацией, поиском и сортировкой
-      const response = await stockService.getPaginated({
-        search: search || undefined,
+      const queryParams = {
         page,
         limit,
         sortBy,
         sortOrder,
         clientTIN: clientTINParam,
-      });
+        warehouse: warehouse || undefined,
+        nomenclature: nomenclature || undefined,
+        article: article || undefined,
+      };
+      
+      const response = await stockService.getPaginated(queryParams);
       
       // Обработка пагинированного ответа
       if (response && 'data' in response && Array.isArray(response.data)) {
@@ -95,21 +116,158 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     } finally {
       setLoading(false);
     }
-  }, [selectedClients, search, page, limit, sortBy, sortOrder]);
+  }, [selectedClients, page, limit, sortBy, sortOrder, warehouse, nomenclature, article]);
 
   useEffect(() => {
     loadStocks();
   }, [loadStocks]);
 
-  // Debounce для поиска
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearch(searchInput);
-      setPage(1); // Сбрасываем на первую страницу при поиске
-    }, 500);
+  // Обработчики для фильтров
+  const handleFilterSelect = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+    setActiveFilterInput(filterType);
+    setIsFiltersDropdownOpen(false);
+  };
 
-    return () => clearTimeout(timer);
-  }, [searchInput]);
+  const handleFilterInputChange = (filterType: 'warehouse' | 'nomenclature' | 'article', value: string) => {
+    if (filterType === 'warehouse') {
+      setWarehouseInput(value);
+    } else if (filterType === 'nomenclature') {
+      setNomenclatureInput(value);
+    } else if (filterType === 'article') {
+      setArticleInput(value);
+    }
+  };
+
+  const handleApplyFilter = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+    const value = filterType === 'warehouse' 
+      ? warehouseInput.trim() 
+      : filterType === 'nomenclature'
+      ? nomenclatureInput.trim()
+      : articleInput.trim();
+    
+    console.log('handleApplyFilter:', { filterType, value });
+    
+    if (value) {
+      console.log('Setting filter:', filterType, '=', value);
+      if (filterType === 'warehouse') {
+        setWarehouse(value);
+        setWarehouseInput('');
+      } else if (filterType === 'nomenclature') {
+        setNomenclature(value);
+        setNomenclatureInput('');
+      } else if (filterType === 'article') {
+        setArticle(value);
+        setArticleInput('');
+      }
+      setPage(1);
+      setActiveFilterInput(null);
+    }
+  };
+
+  const handleFilterInputBlur = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+    // При blur проверяем, есть ли значение
+    const value = filterType === 'warehouse' 
+      ? warehouseInput.trim() 
+      : filterType === 'nomenclature'
+      ? nomenclatureInput.trim()
+      : articleInput.trim();
+    
+    // Если значение пустое, скрываем инпут
+    if (!value) {
+      if (filterType === 'warehouse') {
+        setWarehouseInput('');
+      } else if (filterType === 'nomenclature') {
+        setNomenclatureInput('');
+      } else if (filterType === 'article') {
+        setArticleInput('');
+      }
+      setActiveFilterInput(null);
+    }
+  };
+
+  const handleEditFilter = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+    // При клике на чипс открываем инпут для редактирования
+    setActiveFilterInput(filterType);
+    // Заполняем инпут текущим значением фильтра
+    if (filterType === 'warehouse') {
+      setWarehouseInput(warehouse);
+    } else if (filterType === 'nomenclature') {
+      setNomenclatureInput(nomenclature);
+    } else if (filterType === 'article') {
+      setArticleInput(article);
+    }
+  };
+
+  const handleFilterInputKeyDown = (e: React.KeyboardEvent, filterType: 'warehouse' | 'nomenclature' | 'article') => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleApplyFilter(filterType);
+    } else if (e.key === 'Escape') {
+      // Отмена при Escape
+      if (filterType === 'warehouse') {
+        setWarehouseInput('');
+      } else if (filterType === 'nomenclature') {
+        setNomenclatureInput('');
+      } else if (filterType === 'article') {
+        setArticleInput('');
+      }
+      setActiveFilterInput(null);
+    }
+  };
+
+  const handleRemoveFilter = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+    if (filterType === 'warehouse') {
+      setWarehouse('');
+      setWarehouseInput('');
+    } else if (filterType === 'nomenclature') {
+      setNomenclature('');
+      setNomenclatureInput('');
+    } else if (filterType === 'article') {
+      setArticle('');
+      setArticleInput('');
+    }
+    setPage(1);
+  };
+
+  const handleResetAllFilters = () => {
+    setWarehouse('');
+    setWarehouseInput('');
+    setNomenclature('');
+    setNomenclatureInput('');
+    setArticle('');
+    setArticleInput('');
+    setActiveFilterInput(null);
+    setPage(1);
+  };
+
+  // Подсчитываем количество активных фильтров
+  const activeFiltersCount = [warehouse, nomenclature, article].filter(Boolean).length;
+
+  // Закрытие выпадающего списка при клике вне
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        filtersDropdownRef.current &&
+        !filtersDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsFiltersDropdownOpen(false);
+      }
+      if (
+        limitDropdownRef.current &&
+        !limitDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsLimitDropdownOpen(false);
+      }
+    };
+
+    if (isFiltersDropdownOpen || isLimitDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isFiltersDropdownOpen, isLimitDropdownOpen]);
 
   const handleExport = useCallback(() => {
     if (stocks.length === 0) {
@@ -145,35 +303,278 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     }
   }, [onExportReady, handleExport]);
 
+  const getFilterLabel = (type: 'warehouse' | 'nomenclature' | 'article') => {
+    switch (type) {
+      case 'warehouse':
+        return 'Склад';
+      case 'nomenclature':
+        return 'Номенклатура';
+      case 'article':
+        return 'Артикул';
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Панель поиска и фильтров */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex-1 max-w-md">
-          <Input
-            type="text"
-            placeholder="Поиск по складу или номенклатуре..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full"
-          />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="relative" ref={filtersDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsFiltersDropdownOpen(!isFiltersDropdownOpen)}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 stroke-current"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2.29004 5.90393H17.7067"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M17.7075 14.0961H2.29085"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M12.0826 3.33331C13.5024 3.33331 14.6534 4.48431 14.6534 5.90414C14.6534 7.32398 13.5024 8.47498 12.0826 8.47498C10.6627 8.47498 9.51172 7.32398 9.51172 5.90415C9.51172 4.48432 10.6627 3.33331 12.0826 3.33331Z"
+                    fill="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path
+                    d="M7.91745 11.525C6.49762 11.525 5.34662 12.676 5.34662 14.0959C5.34661 15.5157 6.49762 16.6667 7.91745 16.6667C9.33728 16.6667 10.4883 15.5157 10.4883 14.0959C10.4883 12.676 9.33728 11.525 7.91745 11.525Z"
+                    fill="currentColor"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+                Фильтры
+              </button>
+              {isFiltersDropdownOpen && (
+                <Dropdown
+                  isOpen={isFiltersDropdownOpen}
+                  onClose={() => setIsFiltersDropdownOpen(false)}
+                  className="w-48 p-2 mt-1 left-0"
+                >
+                  {!warehouse && activeFilterInput !== 'warehouse' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('warehouse')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Склад
+                    </DropdownItem>
+                  )}
+                  {!nomenclature && activeFilterInput !== 'nomenclature' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('nomenclature')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Номенклатура
+                    </DropdownItem>
+                  )}
+                  {!article && activeFilterInput !== 'article' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('article')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Артикул
+                    </DropdownItem>
+                  )}
+                </Dropdown>
+              )}
+            </div>
+            
+            {/* Кнопка "Сбросить" - показывается если больше одного фильтра */}
+            {activeFiltersCount > 1 && (
+              <button
+                type="button"
+                onClick={handleResetAllFilters}
+                className="inline-flex items-center gap-1.5 px-4 py-2 border border-red-300 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800 text-red-700 dark:text-red-300 text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                aria-label="Сбросить все фильтры"
+              >
+                <TrashBinIcon className="w-4 h-4" />
+                Сбросить
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-400">
+              Лимит:
+            </label>
+            <div className="relative" ref={limitDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsLimitDropdownOpen(!isLimitDropdownOpen)}
+                className="inline-flex items-center justify-between h-9 w-19 rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-800 dark:text-white/90 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800"
+              >
+                <span>{limit}</span>
+                <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+              </button>
+              {isLimitDropdownOpen && (
+                <Dropdown
+                  isOpen={isLimitDropdownOpen}
+                  onClose={() => setIsLimitDropdownOpen(false)}
+                  className="w-24 p-1 mt-1 left-0"
+                >
+                  <DropdownItem
+                    onItemClick={() => {
+                      setLimit(20);
+                      setPage(1);
+                      setIsLimitDropdownOpen(false);
+                    }}
+                    className={`flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200 px-3 py-2 ${
+                      limit === 20 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    }`}
+                  >
+                    20
+                  </DropdownItem>
+                  <DropdownItem
+                    onItemClick={() => {
+                      setLimit(30);
+                      setPage(1);
+                      setIsLimitDropdownOpen(false);
+                    }}
+                    className={`flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200 px-3 py-2 ${
+                      limit === 30 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    }`}
+                  >
+                    30
+                  </DropdownItem>
+                  <DropdownItem
+                    onItemClick={() => {
+                      setLimit(50);
+                      setPage(1);
+                      setIsLimitDropdownOpen(false);
+                    }}
+                    className={`flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200 px-3 py-2 ${
+                      limit === 50 ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    }`}
+                  >
+                    50
+                  </DropdownItem>
+                </Dropdown>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">
-            Лимит:
-          </label>
-          <select
-            value={limit}
-            onChange={(e) => {
-              setLimit(Number(e.target.value));
-              setPage(1);
-            }}
-            className="px-3 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm"
-          >
-            <option value={20}>20</option>
-            <option value={30}>30</option>
-            <option value={50}>50</option>
-          </select>
+
+        {/* Инпут для активного фильтра - над чипсами */}
+        {activeFilterInput && (
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              placeholder={`Поиск в поле ${getFilterLabel(activeFilterInput).toLowerCase()}`}
+              value={
+                activeFilterInput === 'warehouse'
+                  ? warehouseInput
+                  : activeFilterInput === 'nomenclature'
+                  ? nomenclatureInput
+                  : articleInput
+              }
+              onChange={(e) => handleFilterInputChange(activeFilterInput, e.target.value)}
+              onBlur={() => handleFilterInputBlur(activeFilterInput)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleApplyFilter(activeFilterInput);
+                }
+              }}
+              className="h-11 w-80 rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:border-gray-700 dark:focus:border-brand-800"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => handleApplyFilter(activeFilterInput)}
+              className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={
+                activeFilterInput === 'warehouse'
+                  ? !warehouseInput.trim()
+                  : activeFilterInput === 'nomenclature'
+                  ? !nomenclatureInput.trim()
+                  : !articleInput.trim()
+              }
+              aria-label="Применить фильтр"
+            >
+              <CheckLineIcon />
+            </button>
+          </div>
+        )}
+
+        {/* Фильтры с чипсами */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Чипсы с примененными фильтрами */}
+          {warehouse && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('warehouse')}
+            >
+              <span>Склад: {warehouse}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('warehouse');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {nomenclature && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('nomenclature')}
+            >
+              <span>Номенклатура: {nomenclature}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('nomenclature');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {article && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('article')}
+            >
+              <span>Артикул: {article}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('article');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -256,8 +657,8 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
                       <div className="text-gray-500 dark:text-gray-400">
                         {selectedClients.length === 0 
                           ? 'Выберите клиентов для отображения данных' 
-                          : search
-                          ? 'Ничего не найдено по вашему запросу'
+                          : (warehouse || nomenclature || article)
+                          ? 'Ничего не найдено по выбранным фильтрам'
                           : 'Нет данных по выбранным клиентам'}
                       </div>
                     </TableCell>

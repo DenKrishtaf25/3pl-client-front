@@ -90,6 +90,9 @@ export interface IStockQueryParams {
     sortBy?: 'article' | 'quantity'
     sortOrder?: 'asc' | 'desc'
     clientTIN?: string // Может быть несколько через запятую: "123,456"
+    warehouse?: string // Фильтр по складу
+    nomenclature?: string // Фильтр по номенклатуре
+    article?: string // Фильтр по артикулу
 }
 
 export interface IRegistryQueryParams {
