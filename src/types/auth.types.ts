@@ -105,6 +105,14 @@ export interface IRegistryQueryParams {
     dateField?: 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan' // Поле для фильтрации по дате
     dateFrom?: string // Дата в формате ISO (YYYY-MM-DD)
     dateTo?: string // Дата в формате ISO (YYYY-MM-DD)
+    branch?: string // Фильтр по филиалу
+    counterparty?: string // Фильтр по контрагенту
+    vehicleNumber?: string // Фильтр по номеру ТС
+    driverName?: string // Фильтр по ФИО водителя
+    orderNumber?: string // Фильтр по номеру заказа
+    orderType?: string // Фильтр по типу прихода
+    status?: string // Фильтр по статусу ТС
+    processingType?: string // Фильтр по типу обработки
 }
 
 export interface IOrderQueryParams {

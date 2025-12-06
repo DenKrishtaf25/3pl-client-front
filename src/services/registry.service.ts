@@ -16,10 +16,23 @@ export interface IRegistry {
   packagesActual: number;
   linesPlanned: number;
   linesActual: number;
+  vehicleNumber?: string;
+  driverName?: string;
+  processingType?: string;
+  departureDate?: string;
   clientTIN: string;
   createdAt?: string;
   updatedAt?: string;
   client?: IClient;
+}
+
+export interface IRegistryMeta {
+  lastImportAt: string;
+  recordsImported: number;
+  recordsUpdated: number;
+  recordsDeleted: number;
+  recordsSkipped: number;
+  errors: number;
 }
 
 class RegistryService {
@@ -59,6 +72,30 @@ class RegistryService {
       }
       if (params?.dateTo) {
         queryParams.append('dateTo', params.dateTo);
+      }
+      if (params?.branch) {
+        queryParams.append('branch', params.branch);
+      }
+      if (params?.counterparty) {
+        queryParams.append('counterparty', params.counterparty);
+      }
+      if (params?.vehicleNumber) {
+        queryParams.append('vehicleNumber', params.vehicleNumber);
+      }
+      if (params?.driverName) {
+        queryParams.append('driverName', params.driverName);
+      }
+      if (params?.orderNumber) {
+        queryParams.append('orderNumber', params.orderNumber);
+      }
+      if (params?.orderType) {
+        queryParams.append('orderType', params.orderType);
+      }
+      if (params?.status) {
+        queryParams.append('status', params.status);
+      }
+      if (params?.processingType) {
+        queryParams.append('processingType', params.processingType);
       }
 
       const url = queryParams.toString() 
@@ -186,6 +223,19 @@ class RegistryService {
         console.error('Failed to fetch registries:', error);
       }
       
+      throw error;
+    }
+  }
+
+  /**
+   * Получает метаданные последнего импорта
+   */
+  async getLastImportMeta(): Promise<IRegistryMeta> {
+    try {
+      const response = await axiosWithAuth.get<IRegistryMeta>(`${this.BASE_URL}/meta/last-import`);
+      return response.data;
+    } catch (error: unknown) {
+      console.error('Failed to fetch last import meta:', error);
       throw error;
     }
   }
