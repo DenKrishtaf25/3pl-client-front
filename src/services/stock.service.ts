@@ -13,6 +13,15 @@ export interface IStock {
   client?: IClient;
 }
 
+export interface IStockMeta {
+  lastImportAt: string;
+  recordsImported: number;
+  recordsUpdated: number;
+  recordsDeleted: number;
+  recordsSkipped: number;
+  errors: number;
+}
+
 class StockService {
   private BASE_URL = '/stocks';
 
@@ -114,6 +123,19 @@ class StockService {
   async getStocksByTIN(clientTIN: string) {
     const response = await axiosWithAuth.get<IStock[]>(`${this.BASE_URL}?clientTIN=${clientTIN}`);
     return response.data;
+  }
+
+  /**
+   * Получает метаданные последнего импорта
+   */
+  async getLastImportMeta(): Promise<IStockMeta> {
+    try {
+      const response = await axiosWithAuth.get<IStockMeta>(`${this.BASE_URL}/meta/last-import`);
+      return response.data;
+    } catch (error: unknown) {
+      console.error('Failed to fetch last import meta:', error);
+      throw error;
+    }
   }
 }
 

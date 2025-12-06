@@ -11,12 +11,10 @@ import { useSelectedClient } from "@/context/ClientContext";
 import { stockService, IStock } from "@/services/stock.service";
 import { IPaginationMeta } from "@/types/auth.types";
 import Pagination from "./Pagination";
-import Input from "../form/input/InputField";
 import { exportToExcel } from "@/utils/excelExport";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
-import Select from "../form/Select";
 
 interface BasicTableOneProps {
   onExportReady?: (exportFn: () => void) => void;
@@ -195,23 +193,6 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
       setNomenclatureInput(nomenclature);
     } else if (filterType === 'article') {
       setArticleInput(article);
-    }
-  };
-
-  const handleFilterInputKeyDown = (e: React.KeyboardEvent, filterType: 'warehouse' | 'nomenclature' | 'article') => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleApplyFilter(filterType);
-    } else if (e.key === 'Escape') {
-      // Отмена при Escape
-      if (filterType === 'warehouse') {
-        setWarehouseInput('');
-      } else if (filterType === 'nomenclature') {
-        setNomenclatureInput('');
-      } else if (filterType === 'article') {
-        setArticleInput('');
-      }
-      setActiveFilterInput(null);
     }
   };
 
@@ -414,10 +395,10 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
               <button
                 type="button"
                 onClick={() => setIsLimitDropdownOpen(!isLimitDropdownOpen)}
-                className="inline-flex items-center justify-between h-9 w-19 rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-800 dark:text-white/90 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800"
+                className="inline-flex items-center justify-between h-9 w-18 rounded-lg border border-gray-300 px-3 py-2.5 text-sm shadow-theme-xs bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-800 dark:text-white/90 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800"
               >
                 <span>{limit}</span>
-                <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <ChevronDownIcon className="text-gray-500 dark:text-gray-400" />
               </button>
               {isLimitDropdownOpen && (
                 <Dropdown

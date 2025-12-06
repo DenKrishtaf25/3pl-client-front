@@ -79,7 +79,6 @@ const othersItems: NavItem[] = [
         { name: "Финансовые претензии", path: "/finance", pro: false },
         { name: "Рекламации", path: "/complaints", pro: false },
     ],
-    disabled: true,
   },
   {
     icon: <PackagePlus strokeWidth={1.5} />,
