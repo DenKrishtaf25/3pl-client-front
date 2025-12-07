@@ -51,14 +51,43 @@ class OrderService {
       if (params?.clientTIN) {
         queryParams.append('clientTIN', params.clientTIN);
       }
-      if (params?.dateField) {
-        queryParams.append('dateField', params.dateField);
+      // Фильтры по датам
+      if (params?.acceptanceDateFrom) {
+        queryParams.append('acceptanceDateFrom', params.acceptanceDateFrom);
       }
-      if (params?.dateFrom) {
-        queryParams.append('dateFrom', params.dateFrom);
+      if (params?.acceptanceDateTo) {
+        queryParams.append('acceptanceDateTo', params.acceptanceDateTo);
       }
-      if (params?.dateTo) {
-        queryParams.append('dateTo', params.dateTo);
+      if (params?.exportDateFrom) {
+        queryParams.append('exportDateFrom', params.exportDateFrom);
+      }
+      if (params?.exportDateTo) {
+        queryParams.append('exportDateTo', params.exportDateTo);
+      }
+      if (params?.shipmentDateFrom) {
+        queryParams.append('shipmentDateFrom', params.shipmentDateFrom);
+      }
+      if (params?.shipmentDateTo) {
+        queryParams.append('shipmentDateTo', params.shipmentDateTo);
+      }
+      // Фильтры по колонкам
+      if (params?.branch) {
+        queryParams.append('branch', params.branch);
+      }
+      if (params?.counterparty) {
+        queryParams.append('counterparty', params.counterparty);
+      }
+      if (params?.orderNumber) {
+        queryParams.append('orderNumber', params.orderNumber);
+      }
+      if (params?.orderType) {
+        queryParams.append('orderType', params.orderType);
+      }
+      if (params?.status) {
+        queryParams.append('status', params.status);
+      }
+      if (params?.kisNumber) {
+        queryParams.append('kisNumber', params.kisNumber);
       }
 
       const url = queryParams.toString() 

@@ -125,7 +125,16 @@ export interface IOrderQueryParams {
     sortBy?: 'orderNumber' | 'acceptanceDate' | 'exportDate' | 'shipmentDate'
     sortOrder?: 'asc' | 'desc'
     clientTIN?: string // Может быть несколько через запятую: "123,456"
-    dateField?: 'acceptanceDate' | 'exportDate' | 'shipmentDate' // Поле для фильтрации по дате
-    dateFrom?: string // Дата в формате ISO (YYYY-MM-DD)
-    dateTo?: string // Дата в формате ISO (YYYY-MM-DD)
+    acceptanceDateFrom?: string // Дата приемки с (ISO format: YYYY-MM-DD)
+    acceptanceDateTo?: string // Дата приемки до (ISO format: YYYY-MM-DD)
+    exportDateFrom?: string // Дата выгрузки с (ISO format: YYYY-MM-DD)
+    exportDateTo?: string // Дата выгрузки до (ISO format: YYYY-MM-DD)
+    shipmentDateFrom?: string // Дата отгрузки с (ISO format: YYYY-MM-DD или YYYY-MM-DDTHH:mm:ss)
+    shipmentDateTo?: string // Дата отгрузки до (ISO format: YYYY-MM-DD или YYYY-MM-DDTHH:mm:ss)
+    branch?: string // Фильтр по филиалу
+    counterparty?: string // Фильтр по контрагенту
+    orderNumber?: string // Фильтр по номеру заказа
+    orderType?: string // Фильтр по типу заказа
+    status?: string // Фильтр по статусу
+    kisNumber?: string // Фильтр по номеру КИС
 }
