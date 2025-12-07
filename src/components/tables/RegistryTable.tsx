@@ -1,5 +1,10 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "./RegistryTableDatePicker.css";
+import { ru } from "date-fns/locale";
+import { CalendarDays } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -17,7 +22,7 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
 import RussianLicensePlate from "../common/RussianLicensePlate";
 
-type FilterType = 'branch' | 'counterparty' | 'vehicleNumber' | 'driverName' | 'orderNumber' | 'orderType' | 'status' | 'processingType';
+type FilterType = 'branch' | 'counterparty' | 'vehicleNumber' | 'driverName' | 'orderNumber' | 'orderType' | 'status' | 'processingType' | 'shipmentPlan' | 'unloadingDate' | 'departureDate';
 
 interface RegistryTableProps {
   onExportReady?: (exportFn: () => void) => void;
@@ -33,7 +38,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
   // Пагинация и сортировка
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [sortBy, setSortBy] = useState<'orderNumber' | 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan'>('orderNumber');
+  const [sortBy, setSortBy] = useState<'orderNumber' | 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan' | 'departureDate'>('orderNumber');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   
   // Фильтры по колонкам
@@ -46,7 +51,15 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
   const [status, setStatus] = useState('');
   const [processingType, setProcessingType] = useState('');
   
-  // Input состояния для фильтров
+  // Фильтры по датам (применённые значения)
+  const [shipmentPlanFrom, setShipmentPlanFrom] = useState<Date | null>(null);
+  const [shipmentPlanTo, setShipmentPlanTo] = useState<Date | null>(null);
+  const [unloadingDateFrom, setUnloadingDateFrom] = useState<Date | null>(null);
+  const [unloadingDateTo, setUnloadingDateTo] = useState<Date | null>(null);
+  const [departureDateFrom, setDepartureDateFrom] = useState<Date | null>(null);
+  const [departureDateTo, setDepartureDateTo] = useState<Date | null>(null);
+  
+  // Input состояния для фильтров (текстовые)
   const [branchInput, setBranchInput] = useState('');
   const [counterpartyInput, setCounterpartyInput] = useState('');
   const [vehicleNumberInput, setVehicleNumberInput] = useState('');
@@ -56,12 +69,63 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
   const [statusInput, setStatusInput] = useState('');
   const [processingTypeInput, setProcessingTypeInput] = useState('');
   
+  // Input состояния для фильтров по датам (временные, до применения)
+  const [shipmentPlanFromInput, setShipmentPlanFromInput] = useState<Date | null>(null);
+  const [shipmentPlanToInput, setShipmentPlanToInput] = useState<Date | null>(null);
+  const [unloadingDateFromInput, setUnloadingDateFromInput] = useState<Date | null>(null);
+  const [unloadingDateToInput, setUnloadingDateToInput] = useState<Date | null>(null);
+  const [departureDateFromInput, setDepartureDateFromInput] = useState<Date | null>(null);
+  const [departureDateToInput, setDepartureDateToInput] = useState<Date | null>(null);
+  
+  // Input состояния для времени отдельно от даты
+  const [shipmentPlanFromTime, setShipmentPlanFromTime] = useState<string>('00:00');
+  const [shipmentPlanToTime, setShipmentPlanToTime] = useState<string>('23:59');
+  const [departureDateFromTime, setDepartureDateFromTime] = useState<string>('00:00');
+  const [departureDateToTime, setDepartureDateToTime] = useState<string>('23:59');
+  
   // UI состояния для фильтров
   const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
   const [activeFilterInput, setActiveFilterInput] = useState<FilterType | null>(null);
   const filtersDropdownRef = useRef<HTMLDivElement>(null);
   const [isLimitDropdownOpen, setIsLimitDropdownOpen] = useState(false);
   const limitDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Функция для объединения даты и времени
+  const combineDateAndTime = (date: Date | null, time: string): Date | null => {
+    if (!date) return null;
+    if (!time || !time.includes(':')) return date;
+    const timeParts = time.split(':');
+    if (timeParts.length !== 2) return date;
+    const hours = parseInt(timeParts[0], 10);
+    const minutes = parseInt(timeParts[1], 10);
+    if (isNaN(hours) || isNaN(minutes)) return date;
+    const combined = new Date(date);
+    combined.setHours(hours, minutes, 0, 0);
+    return combined;
+  };
+
+  // Функция для форматирования даты в ISO формат с временем
+  const formatDateToISO = (date: Date | null, includeTime: boolean = true): string | undefined => {
+    if (!date) return undefined;
+    
+    if (includeTime) {
+      // Формат: YYYY-MM-DDTHH:mm:00 (по примеру API: 2024-01-15T10:00:00)
+      // Используем локальное время (getFullYear, getMonth и т.д. - локальные методы)
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      // По примеру API формат: 2024-01-15T10:00:00 (с секундами 00)
+      return `${year}-${month}-${day}T${hours}:${minutes}:00`;
+    } else {
+      // Формат: YYYY-MM-DD
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  };
 
   const loadRegistries = useCallback(async () => {
     try {
@@ -96,6 +160,26 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
         status: status || undefined,
         processingType: processingType || undefined,
       };
+      
+      // Добавляем фильтры по датам
+      if (shipmentPlanFrom) {
+        requestParams.shipmentPlanFrom = formatDateToISO(shipmentPlanFrom, true);
+      }
+      if (shipmentPlanTo) {
+        requestParams.shipmentPlanTo = formatDateToISO(shipmentPlanTo, true);
+      }
+      if (unloadingDateFrom) {
+        requestParams.unloadingDateFrom = formatDateToISO(unloadingDateFrom, false);
+      }
+      if (unloadingDateTo) {
+        requestParams.unloadingDateTo = formatDateToISO(unloadingDateTo, false);
+      }
+      if (departureDateFrom) {
+        requestParams.departureDateFrom = formatDateToISO(departureDateFrom, true);
+      }
+      if (departureDateTo) {
+        requestParams.departureDateTo = formatDateToISO(departureDateTo, true);
+      }
       
       // Загружаем данные
       const response = await registryService.getPaginated(requestParams);
@@ -132,7 +216,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
     } finally {
       setLoading(false);
     }
-  }, [selectedClients, page, limit, sortBy, sortOrder, branch, counterparty, vehicleNumber, driverName, orderNumber, orderType, status, processingType]);
+  }, [selectedClients, page, limit, sortBy, sortOrder, branch, counterparty, vehicleNumber, driverName, orderNumber, orderType, status, processingType, shipmentPlanFrom, shipmentPlanTo, unloadingDateFrom, unloadingDateTo, departureDateFrom, departureDateTo]);
 
   useEffect(() => {
     loadRegistries();
@@ -142,6 +226,17 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
   const handleFilterSelect = (filterType: FilterType) => {
     setActiveFilterInput(filterType);
     setIsFiltersDropdownOpen(false);
+    
+    // Устанавливаем значения времени по умолчанию при выборе фильтра даты
+    if (isDateFilter(filterType)) {
+      if (filterType === 'shipmentPlan') {
+        setShipmentPlanFromTime('00:00');
+        setShipmentPlanToTime('23:59');
+      } else if (filterType === 'departureDate') {
+        setDepartureDateFromTime('00:00');
+        setDepartureDateToTime('23:59');
+      }
+    }
   };
 
   const handleFilterInputChange = (filterType: FilterType, value: string) => {
@@ -191,6 +286,12 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
         return statusInput;
       case 'processingType':
         return processingTypeInput;
+      case 'shipmentPlan':
+      case 'unloadingDate':
+      case 'departureDate':
+        return '';
+      default:
+        return '';
     }
   };
 
@@ -212,6 +313,12 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
         return status;
       case 'processingType':
         return processingType;
+      case 'shipmentPlan':
+      case 'unloadingDate':
+      case 'departureDate':
+        return '';
+      default:
+        return '';
     }
   };
 
@@ -282,32 +389,117 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
   };
 
   const handleApplyFilter = (filterType: FilterType) => {
-    const value = getFilterInputValue(filterType).trim();
-    
-    if (value) {
-      setFilterValue(filterType, value);
-      setPage(1);
-      setActiveFilterInput(null);
+    if (isDateFilter(filterType)) {
+      // Применение фильтров по датам с объединением времени
+      if (filterType === 'shipmentPlan') {
+        if (shipmentPlanFromInput || shipmentPlanToInput) {
+          const fromDate = combineDateAndTime(shipmentPlanFromInput, shipmentPlanFromTime);
+          const toDate = combineDateAndTime(shipmentPlanToInput, shipmentPlanToTime);
+          setShipmentPlanFrom(fromDate);
+          setShipmentPlanTo(toDate);
+          setShipmentPlanFromInput(null);
+          setShipmentPlanToInput(null);
+          setShipmentPlanFromTime('00:00');
+          setShipmentPlanToTime('23:59');
+          setPage(1);
+          setActiveFilterInput(null);
+        }
+      } else if (filterType === 'unloadingDate') {
+        if (unloadingDateFromInput || unloadingDateToInput) {
+          // Для unloadingDate время не используется, но оставляем для консистентности
+          setUnloadingDateFrom(unloadingDateFromInput);
+          setUnloadingDateTo(unloadingDateToInput);
+          setUnloadingDateFromInput(null);
+          setUnloadingDateToInput(null);
+          setPage(1);
+          setActiveFilterInput(null);
+        }
+      } else if (filterType === 'departureDate') {
+        if (departureDateFromInput || departureDateToInput) {
+          const fromDate = combineDateAndTime(departureDateFromInput, departureDateFromTime);
+          const toDate = combineDateAndTime(departureDateToInput, departureDateToTime);
+          setDepartureDateFrom(fromDate);
+          setDepartureDateTo(toDate);
+          setDepartureDateFromInput(null);
+          setDepartureDateToInput(null);
+          setDepartureDateFromTime('00:00');
+          setDepartureDateToTime('23:59');
+          setPage(1);
+          setActiveFilterInput(null);
+        }
+      }
+    } else {
+      // Применение текстовых фильтров
+      const value = getFilterInputValue(filterType).trim();
+      
+      if (value) {
+        setFilterValue(filterType, value);
+        setPage(1);
+        setActiveFilterInput(null);
+      }
     }
   };
 
   const handleFilterInputBlur = (filterType: FilterType) => {
-    const value = getFilterInputValue(filterType).trim();
-    
-    if (!value) {
-      setFilterInputValue(filterType, '');
-      setActiveFilterInput(null);
+    if (!isDateFilter(filterType)) {
+      const value = getFilterInputValue(filterType).trim();
+      
+      if (!value) {
+        setFilterInputValue(filterType, '');
+        setActiveFilterInput(null);
+      }
     }
+  };
+
+  // Функция для извлечения времени из даты в формате HH:mm
+  const extractTimeFromDate = (date: Date | null): string => {
+    if (!date) return '00:00';
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   const handleEditFilter = (filterType: FilterType) => {
     setActiveFilterInput(filterType);
-    const currentValue = getFilterValue(filterType);
-    setFilterInputValue(filterType, currentValue);
+    
+    if (isDateFilter(filterType)) {
+      // Для дат загружаем текущие применённые значения в input
+      if (filterType === 'shipmentPlan') {
+        setShipmentPlanFromInput(shipmentPlanFrom);
+        setShipmentPlanToInput(shipmentPlanTo);
+        setShipmentPlanFromTime(extractTimeFromDate(shipmentPlanFrom));
+        setShipmentPlanToTime(extractTimeFromDate(shipmentPlanTo));
+      } else if (filterType === 'unloadingDate') {
+        setUnloadingDateFromInput(unloadingDateFrom);
+        setUnloadingDateToInput(unloadingDateTo);
+      } else if (filterType === 'departureDate') {
+        setDepartureDateFromInput(departureDateFrom);
+        setDepartureDateToInput(departureDateTo);
+        setDepartureDateFromTime(extractTimeFromDate(departureDateFrom));
+        setDepartureDateToTime(extractTimeFromDate(departureDateTo));
+      }
+    } else {
+      // Для текстовых фильтров
+      const currentValue = getFilterValue(filterType);
+      setFilterInputValue(filterType, currentValue);
+    }
   };
 
   const handleRemoveFilter = (filterType: FilterType) => {
-    setFilterValue(filterType, '');
+    if (isDateFilter(filterType)) {
+      if (filterType === 'shipmentPlan') {
+        setShipmentPlanFrom(null);
+        setShipmentPlanTo(null);
+      } else if (filterType === 'unloadingDate') {
+        setUnloadingDateFrom(null);
+        setUnloadingDateTo(null);
+      } else if (filterType === 'departureDate') {
+        setDepartureDateFrom(null);
+        setDepartureDateTo(null);
+      }
+    } else {
+      setFilterValue(filterType, '');
+    }
     setPage(1);
   };
 
@@ -328,12 +520,40 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
     setStatusInput('');
     setProcessingType('');
     setProcessingTypeInput('');
+    setShipmentPlanFrom(null);
+    setShipmentPlanTo(null);
+    setShipmentPlanFromInput(null);
+    setShipmentPlanToInput(null);
+    setShipmentPlanFromTime('00:00');
+    setShipmentPlanToTime('23:59');
+    setUnloadingDateFrom(null);
+    setUnloadingDateTo(null);
+    setUnloadingDateFromInput(null);
+    setUnloadingDateToInput(null);
+    setDepartureDateFrom(null);
+    setDepartureDateTo(null);
+    setDepartureDateFromInput(null);
+    setDepartureDateToInput(null);
+    setDepartureDateFromTime('00:00');
+    setDepartureDateToTime('23:59');
     setActiveFilterInput(null);
     setPage(1);
   };
 
   // Подсчитываем количество активных фильтров
-  const activeFiltersCount = [branch, counterparty, vehicleNumber, driverName, orderNumber, orderType, status, processingType].filter(Boolean).length;
+  const activeFiltersCount = [
+    branch, 
+    counterparty, 
+    vehicleNumber, 
+    driverName, 
+    orderNumber, 
+    orderType, 
+    status, 
+    processingType,
+    shipmentPlanFrom || shipmentPlanTo ? 'shipmentPlan' : null,
+    unloadingDateFrom || unloadingDateTo ? 'unloadingDate' : null,
+    departureDateFrom || departureDateTo ? 'departureDate' : null
+  ].filter(Boolean).length;
 
   // Закрытие выпадающего списка при клике вне
   useEffect(() => {
@@ -372,6 +592,19 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
     return `${day}.${month}.${year} ${hours}:${minutes}`;
   };
 
+  const formatDateForChip = (date: Date | null, includeTime: boolean = true): string => {
+    if (!date) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    if (includeTime) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${day}.${month}.${year} ${hours}:${minutes}`;
+    }
+    return `${day}.${month}.${year}`;
+  };
+
   const handleExport = useCallback(() => {
     if (registries.length === 0) {
       alert('Нет данных для экспорта');
@@ -403,7 +636,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
     }
   }, [onExportReady, handleExport]);
 
-  const handleSort = (field: 'orderNumber' | 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan') => {
+  const handleSort = (field: 'orderNumber' | 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan' | 'departureDate') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -431,11 +664,30 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
         return 'Статус ТС';
       case 'processingType':
         return 'Тип обработки';
+      case 'shipmentPlan':
+        return 'Дата планового прибытия';
+      case 'unloadingDate':
+        return 'Дата факт прибытия';
+      case 'departureDate':
+        return 'Дата убытия';
     }
   };
 
   const hasFilter = (filterType: FilterType): boolean => {
+    if (filterType === 'shipmentPlan') {
+      return !!(shipmentPlanFrom || shipmentPlanTo);
+    }
+    if (filterType === 'unloadingDate') {
+      return !!(unloadingDateFrom || unloadingDateTo);
+    }
+    if (filterType === 'departureDate') {
+      return !!(departureDateFrom || departureDateTo);
+    }
     return !!getFilterValue(filterType);
+  };
+
+  const isDateFilter = (filterType: FilterType): boolean => {
+    return filterType === 'shipmentPlan' || filterType === 'unloadingDate' || filterType === 'departureDate';
   };
 
   return (
@@ -553,6 +805,30 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                       Тип обработки
                     </DropdownItem>
                   )}
+                  {!hasFilter('shipmentPlan') && activeFilterInput !== 'shipmentPlan' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('shipmentPlan')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Дата планового прибытия
+                    </DropdownItem>
+                  )}
+                  {!hasFilter('unloadingDate') && activeFilterInput !== 'unloadingDate' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('unloadingDate')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Дата факт прибытия
+                    </DropdownItem>
+                  )}
+                  {!hasFilter('departureDate') && activeFilterInput !== 'departureDate' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('departureDate')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Дата убытия
+                    </DropdownItem>
+                  )}
                 </Dropdown>
               )}
             </div>
@@ -569,11 +845,11 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                 Сбросить
               </button>
             )}
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600 dark:text-gray-400">
-              Лимит:
-            </label>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
+            Лимит:
+          </label>
             <div className="relative" ref={limitDropdownRef}>
               <button
                 type="button"
@@ -592,7 +868,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                   <DropdownItem
                     onItemClick={() => {
                       setLimit(20);
-                      setPage(1);
+              setPage(1);
                       setIsLimitDropdownOpen(false);
                     }}
                     className={`flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200 px-3 py-2 ${
@@ -604,7 +880,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                   <DropdownItem
                     onItemClick={() => {
                       setLimit(30);
-                      setPage(1);
+                setPage(1);
                       setIsLimitDropdownOpen(false);
                     }}
                     className={`flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200 px-3 py-2 ${
@@ -629,35 +905,188 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
               )}
             </div>
           </div>
-        </div>
-
+          </div>
+          
         {/* Инпут для активного фильтра - над чипсами */}
         {activeFilterInput && (
           <div className="flex items-center gap-2">
-            <input
-              type="text"
-              placeholder={`Поиск в поле ${getFilterLabel(activeFilterInput).toLowerCase()}`}
-              value={getFilterInputValue(activeFilterInput)}
-              onChange={(e) => handleFilterInputChange(activeFilterInput, e.target.value)}
-              onBlur={() => handleFilterInputBlur(activeFilterInput)}
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleApplyFilter(activeFilterInput);
-                }
-              }}
-              className="h-11 w-80 rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:border-gray-700 dark:focus:border-brand-800"
-              autoFocus
+            {isDateFilter(activeFilterInput) ? (
+              // UI для фильтров по датам
+              <div className="flex items-center gap-2">
+                {activeFilterInput === 'shipmentPlan' && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={shipmentPlanFromInput || undefined}
+                          onChange={(date) => setShipmentPlanFromInput(date)}
+                          selectsStart
+                          startDate={shipmentPlanFromInput || undefined}
+                          endDate={shipmentPlanToInput || undefined}
+                          placeholderText="С"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={shipmentPlanFromTime}
+                        onChange={(e) => setShipmentPlanFromTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      />
+                    </div>
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={shipmentPlanToInput || undefined}
+                          onChange={(date) => setShipmentPlanToInput(date)}
+                          selectsEnd
+                          startDate={shipmentPlanFromInput || undefined}
+                          endDate={shipmentPlanToInput || undefined}
+                          placeholderText="До"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={shipmentPlanToTime}
+                        onChange={(e) => setShipmentPlanToTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      />
+                    </div>
+                  </>
+                )}
+                {activeFilterInput === 'unloadingDate' && (
+                  <>
+                    <div className="relative">
+                      <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                      <DatePicker
+                        selected={unloadingDateFromInput || undefined}
+                        onChange={(date) => setUnloadingDateFromInput(date)}
+                        selectsStart
+                        startDate={unloadingDateFromInput || undefined}
+                        endDate={unloadingDateToInput || undefined}
+                        placeholderText="С"
+              dateFormat="dd.MM.yyyy"
+              locale={ru}
+                        className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
-            <button
-              type="button"
-              onClick={() => handleApplyFilter(activeFilterInput)}
-              className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={!getFilterInputValue(activeFilterInput).trim()}
-              aria-label="Применить фильтр"
-            >
-              <CheckLineIcon />
-            </button>
+          </div>
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
+                    <div className="relative">
+                      <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+            <DatePicker
+                        selected={unloadingDateToInput || undefined}
+                        onChange={(date) => setUnloadingDateToInput(date)}
+              selectsEnd
+                        startDate={unloadingDateFromInput || undefined}
+                        endDate={unloadingDateToInput || undefined}
+                        placeholderText="До"
+              dateFormat="dd.MM.yyyy"
+              locale={ru}
+                        className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            />
+          </div>
+                  </>
+                )}
+                {activeFilterInput === 'departureDate' && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={departureDateFromInput || undefined}
+                          onChange={(date) => setDepartureDateFromInput(date)}
+                          selectsStart
+                          startDate={departureDateFromInput || undefined}
+                          endDate={departureDateToInput || undefined}
+                          placeholderText="С"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={departureDateFromTime}
+                        onChange={(e) => setDepartureDateFromTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      />
+                    </div>
+                    <span className="text-gray-500 dark:text-gray-400">—</span>
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={departureDateToInput || undefined}
+                          onChange={(date) => setDepartureDateToInput(date)}
+                          selectsEnd
+                          startDate={departureDateFromInput || undefined}
+                          endDate={departureDateToInput || undefined}
+                          placeholderText="До"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={departureDateToTime}
+                        onChange={(e) => setDepartureDateToTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                      />
+                    </div>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleApplyFilter(activeFilterInput)}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    (activeFilterInput === 'shipmentPlan' && !shipmentPlanFromInput && !shipmentPlanToInput) ||
+                    (activeFilterInput === 'unloadingDate' && !unloadingDateFromInput && !unloadingDateToInput) ||
+                    (activeFilterInput === 'departureDate' && !departureDateFromInput && !departureDateToInput)
+                  }
+                  aria-label="Применить фильтр"
+                >
+                  <CheckLineIcon />
+                </button>
+              </div>
+            ) : (
+              // UI для текстовых фильтров
+              <>
+                <input
+                  type="text"
+                  placeholder={`Поиск в поле ${getFilterLabel(activeFilterInput).toLowerCase()}`}
+                  value={getFilterInputValue(activeFilterInput)}
+                  onChange={(e) => handleFilterInputChange(activeFilterInput, e.target.value)}
+                  onBlur={() => handleFilterInputBlur(activeFilterInput)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleApplyFilter(activeFilterInput);
+                    }
+                  }}
+                  className="h-11 w-80 rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:border-gray-700 dark:focus:border-brand-800"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => handleApplyFilter(activeFilterInput)}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!getFilterInputValue(activeFilterInput).trim()}
+                  aria-label="Применить фильтр"
+                >
+                  <CheckLineIcon />
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -669,7 +1098,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
               onClick={() => handleEditFilter('branch')}
             >
               <span>Филиал: {branch}</span>
-              <button
+            <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -681,8 +1110,8 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
-            </div>
+            </button>
+          </div>
           )}
           {counterparty && (
             <div 
@@ -831,6 +1260,81 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
               </button>
             </div>
           )}
+          {hasFilter('shipmentPlan') && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('shipmentPlan')}
+            >
+              <span>
+                Дата планового прибытия: {shipmentPlanFrom && formatDateForChip(shipmentPlanFrom, true)}
+                {shipmentPlanFrom && shipmentPlanTo && ' — '}
+                {shipmentPlanTo && formatDateForChip(shipmentPlanTo, true)}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('shipmentPlan');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {hasFilter('unloadingDate') && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('unloadingDate')}
+            >
+              <span>
+                Дата факт прибытия: {unloadingDateFrom && formatDateForChip(unloadingDateFrom, false)}
+                {unloadingDateFrom && unloadingDateTo && ' — '}
+                {unloadingDateTo && formatDateForChip(unloadingDateTo, false)}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('unloadingDate');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {hasFilter('departureDate') && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('departureDate')}
+            >
+              <span>
+                Дата убытия: {departureDateFrom && formatDateForChip(departureDateFrom, true)}
+                {departureDateFrom && departureDateTo && ' — '}
+                {departureDateTo && formatDateForChip(departureDateTo, true)}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('departureDate');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -857,89 +1361,100 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                 >
                   Номер ТС
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
+              <TableCell
+                isHeader
+                className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+              >
                   Тип прихода
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
-                  <button
-                    type="button"
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+              >
+                <button
+                  type="button"
                     onClick={() => handleSort('orderNumber')}
-                    className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  >
+                  className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
                     Номер заказа
                     {sortBy === 'orderNumber' && (
-                      <span className="text-brand-500">
-                        {sortOrder === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </button>
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
+                    <span className="text-brand-500">
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </button>
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+              >
                   ФИО водителя
-                </TableCell>
-                <TableCell
-                  isHeader
+              </TableCell>
+              <TableCell
+                isHeader
                   className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
+              >
                   Тип обработки
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
-                  <button
-                    type="button"
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+              >
+                <button
+                  type="button"
                     onClick={() => handleSort('shipmentPlan')}
-                    className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  >
+                  className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
                     Дата планового прибытия
                     {sortBy === 'shipmentPlan' && (
-                      <span className="text-brand-500">
-                        {sortOrder === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </button>
-                </TableCell>
-                <TableCell
-                  isHeader
+                    <span className="text-brand-500">
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </button>
+              </TableCell>
+              <TableCell
+                isHeader
+                className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSort('unloadingDate')}
+                  className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                >
+                    Дата факт прибытия
+                  {sortBy === 'unloadingDate' && (
+                    <span className="text-brand-500">
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </button>
+              </TableCell>
+              <TableCell
+                isHeader
                   className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                 >
                   <button
                     type="button"
-                    onClick={() => handleSort('unloadingDate')}
+                    onClick={() => handleSort('departureDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Дата факт прибытия
-                    {sortBy === 'unloadingDate' && (
+                    Дата убытия
+                    {sortBy === 'departureDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
                       </span>
                     )}
                   </button>
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
-                  Дата убытия
-                </TableCell>
-                <TableCell
-                  isHeader
+              </TableCell>
+              <TableCell
+                isHeader
                   className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                 >
                   Статус ТС
-                </TableCell>
-              </TableRow>
-            </TableHeader>
+              </TableCell>
+            </TableRow>
+          </TableHeader>
 
             <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
               {loading ? (

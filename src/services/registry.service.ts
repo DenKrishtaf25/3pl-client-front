@@ -64,14 +64,24 @@ class RegistryService {
       if (params?.clientTIN) {
         queryParams.append('clientTIN', params.clientTIN);
       }
-      if (params?.dateField) {
-        queryParams.append('dateField', params.dateField);
+      // Новые фильтры по датам
+      if (params?.shipmentPlanFrom) {
+        queryParams.append('shipmentPlanFrom', params.shipmentPlanFrom);
       }
-      if (params?.dateFrom) {
-        queryParams.append('dateFrom', params.dateFrom);
+      if (params?.shipmentPlanTo) {
+        queryParams.append('shipmentPlanTo', params.shipmentPlanTo);
       }
-      if (params?.dateTo) {
-        queryParams.append('dateTo', params.dateTo);
+      if (params?.unloadingDateFrom) {
+        queryParams.append('unloadingDateFrom', params.unloadingDateFrom);
+      }
+      if (params?.unloadingDateTo) {
+        queryParams.append('unloadingDateTo', params.unloadingDateTo);
+      }
+      if (params?.departureDateFrom) {
+        queryParams.append('departureDateFrom', params.departureDateFrom);
+      }
+      if (params?.departureDateTo) {
+        queryParams.append('departureDateTo', params.departureDateTo);
       }
       if (params?.branch) {
         queryParams.append('branch', params.branch);
@@ -103,75 +113,6 @@ class RegistryService {
         : this.BASE_URL;
 
       const response = await axiosWithAuth.get<IPaginatedResponse<IRegistry> | IRegistry[]>(url);
-      
-      // Получаем данные для обработки
-      const responseData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data as IPaginatedResponse<IRegistry>)?.data;
-      
-      // Логирование для проверки фильтра по дате
-      if (params?.dateField && (params?.dateFrom || params?.dateTo) && responseData && responseData.length > 0) {
-        const dateFieldName = params.dateField;
-        
-        // Функция для получения даты в формате YYYY-MM-DD из любой даты
-        const getDateString = (date: Date | string | null): string | null => {
-          if (!date) return null;
-          const d = typeof date === 'string' ? new Date(date) : date;
-          return d.toISOString().split('T')[0];
-        };
-        
-        const dateFromStr = params.dateFrom || null;
-        const dateToStr = params.dateTo || null;
-        
-        console.log('📅 Фильтр по дате:', {
-          поле: dateFieldName,
-          с: dateFromStr || 'не указано',
-          по: dateToStr || 'не указано',
-          всего_записей: responseData.length,
-        });
-        
-        // Проверяем ВСЕ записи и выводим детальную информацию
-        const allDatesInfo = responseData.map((item: IRegistry, index: number) => {
-          const rawValue = item[dateFieldName];
-          const itemDateStr = getDateString(rawValue);
-          const itemDate = rawValue ? new Date(rawValue) : null;
-          const isValid = itemDateStr && (
-            (!dateFromStr || itemDateStr >= dateFromStr) && 
-            (!dateToStr || itemDateStr <= dateToStr)
-          );
-          return {
-            индекс: index,
-            orderNumber: item.orderNumber,
-            сырое_значение: rawValue,
-            дата_YYYY_MM_DD: itemDateStr || 'нет даты',
-            полная_дата_ISO: itemDate ? itemDate.toISOString() : 'нет',
-            соответствует: isValid ? '✅' : '❌',
-          };
-        });
-        
-        console.log('📋 Все записи с датами:', allDatesInfo);
-        
-        // Проверяем все записи (сравниваем только даты без времени)
-        const invalidDates = responseData.filter((item: IRegistry) => {
-          const itemDateStr = getDateString(item[dateFieldName]);
-          if (!itemDateStr) return true;
-          if (dateFromStr && itemDateStr < dateFromStr) return true;
-          if (dateToStr && itemDateStr > dateToStr) return true;
-          return false;
-        });
-        
-        if (invalidDates.length > 0) {
-          console.warn(`⚠️ Найдено ${invalidDates.length} записей вне диапазона фильтра!`);
-          console.warn('Все несоответствующие записи:', invalidDates.map((item: IRegistry) => ({
-            orderNumber: item.orderNumber,
-            сырое_значение: item[dateFieldName],
-            дата_YYYY_MM_DD: getDateString(item[dateFieldName]) || 'нет даты',
-            полная_дата_ISO: item[dateFieldName] ? new Date(item[dateFieldName]).toISOString() : 'нет',
-          })));
-        } else {
-          console.log('✅ Все записи соответствуют фильтру по дате');
-        }
-      }
       
       // Если ответ - массив (старый формат), преобразуем в пагинированный формат
       if (Array.isArray(response.data)) {

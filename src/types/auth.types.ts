@@ -99,12 +99,15 @@ export interface IRegistryQueryParams {
     search?: string
     page?: number
     limit?: number
-    sortBy?: 'orderNumber' | 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan'
+    sortBy?: 'orderNumber' | 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan' | 'departureDate'
     sortOrder?: 'asc' | 'desc'
     clientTIN?: string // Может быть несколько через запятую: "123,456"
-    dateField?: 'acceptanceDate' | 'unloadingDate' | 'shipmentPlan' // Поле для фильтрации по дате
-    dateFrom?: string // Дата в формате ISO (YYYY-MM-DD)
-    dateTo?: string // Дата в формате ISO (YYYY-MM-DD)
+    shipmentPlanFrom?: string // Дата планового прибытия с (ISO format: YYYY-MM-DD или YYYY-MM-DDTHH:mm:ss)
+    shipmentPlanTo?: string // Дата планового прибытия до (ISO format: YYYY-MM-DD или YYYY-MM-DDTHH:mm:ss)
+    unloadingDateFrom?: string // Дата фактического прибытия с (ISO format: YYYY-MM-DD)
+    unloadingDateTo?: string // Дата фактического прибытия до (ISO format: YYYY-MM-DD)
+    departureDateFrom?: string // Дата убытия с (ISO format: YYYY-MM-DD или YYYY-MM-DDTHH:mm:ss)
+    departureDateTo?: string // Дата убытия до (ISO format: YYYY-MM-DD или YYYY-MM-DDTHH:mm:ss)
     branch?: string // Фильтр по филиалу
     counterparty?: string // Фильтр по контрагенту
     vehicleNumber?: string // Фильтр по номеру ТС
