@@ -22,6 +22,15 @@ export interface IOrder {
   client?: IClient;
 }
 
+export interface IOrderMeta {
+  lastImportAt: string;
+  recordsImported: number;
+  recordsUpdated: number;
+  recordsDeleted: number;
+  recordsSkipped: number;
+  errors: number;
+}
+
 class OrderService {
   private BASE_URL = '/orders';
 
@@ -146,6 +155,19 @@ class OrderService {
         console.error('Failed to fetch orders:', error);
       }
       
+      throw error;
+    }
+  }
+
+  /**
+   * Получает метаданные последнего импорта
+   */
+  async getLastImportMeta(): Promise<IOrderMeta> {
+    try {
+      const response = await axiosWithAuth.get<IOrderMeta>(`${this.BASE_URL}/meta/last-import`);
+      return response.data;
+    } catch (error: unknown) {
+      console.error('Failed to fetch last import meta:', error);
       throw error;
     }
   }

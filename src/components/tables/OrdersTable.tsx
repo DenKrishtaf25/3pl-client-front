@@ -569,11 +569,11 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       'Тип заказа': order.orderType,
       '№ заказа': order.orderNumber,
       '№ КИС': order.kisNumber || '',
-      'Дата выгрузки': formatDate(order.exportDate),
+      'Создан': formatDate(order.exportDate),
       'Статус': order.status,
       'Контрагент': order.counterparty,
-      'Дата приемки': formatDate(order.acceptanceDate),
-      'Дата отгрузки': formatDateTime(order.shipmentDate),
+      'Принят': formatDate(order.acceptanceDate),
+      'Отгружен': formatDateTime(order.shipmentDate),
       'Упаковок план': order.packagesPlanned,
       'Упаковок факт': order.packagesActual,
       'Строк план': order.linesPlanned,
@@ -615,11 +615,11 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       case 'kisNumber':
         return '№ КИС';
       case 'acceptanceDate':
-        return 'Дата приемки';
+        return 'Принят';
       case 'exportDate':
-        return 'Дата выгрузки';
+        return 'Создан';
       case 'shipmentDate':
-        return 'Дата отгрузки';
+        return 'Отгружен';
     }
   };
 
@@ -744,7 +744,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('acceptanceDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Дата приемки
+                      Принят
                     </DropdownItem>
                   )}
                   {!hasFilter('exportDate') && activeFilterInput !== 'exportDate' && (
@@ -752,7 +752,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('exportDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Дата выгрузки
+                      Создан
                     </DropdownItem>
                   )}
                   {!hasFilter('shipmentDate') && activeFilterInput !== 'shipmentDate' && (
@@ -760,7 +760,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('shipmentDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Дата отгрузки
+                      Отгружен
                     </DropdownItem>
                   )}
                 </Dropdown>
@@ -1142,7 +1142,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('acceptanceDate')}
             >
               <span>
-                Дата приемки: {acceptanceDateFrom && formatDateForChip(acceptanceDateFrom, false)}
+                Принят: {acceptanceDateFrom && formatDateForChip(acceptanceDateFrom, false)}
                 {acceptanceDateFrom && acceptanceDateTo && ' — '}
                 {acceptanceDateTo && formatDateForChip(acceptanceDateTo, false)}
               </span>
@@ -1167,7 +1167,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('exportDate')}
             >
               <span>
-                Дата выгрузки: {exportDateFrom && formatDateForChip(exportDateFrom, false)}
+                Создан: {exportDateFrom && formatDateForChip(exportDateFrom, false)}
                 {exportDateFrom && exportDateTo && ' — '}
                 {exportDateTo && formatDateForChip(exportDateTo, false)}
               </span>
@@ -1192,7 +1192,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('shipmentDate')}
             >
               <span>
-                Дата отгрузки: {shipmentDateFrom && formatDateForChip(shipmentDateFrom, true)}
+                Отгружен: {shipmentDateFrom && formatDateForChip(shipmentDateFrom, true)}
                 {shipmentDateFrom && shipmentDateTo && ' — '}
                 {shipmentDateTo && formatDateForChip(shipmentDateTo, true)}
               </span>
@@ -1264,7 +1264,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('exportDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Дата выгрузки
+                    Создан
                     {sortBy === 'exportDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
@@ -1293,7 +1293,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('acceptanceDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Дата приемки
+                    Принят
                     {sortBy === 'acceptanceDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
@@ -1310,7 +1310,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('shipmentDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Дата отгрузки
+                    Отгружен
                     {sortBy === 'shipmentDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
