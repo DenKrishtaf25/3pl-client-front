@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useMemo, useRef } from "react";
 
 import { ApexOptions } from "apexcharts";
 
@@ -9,10 +9,48 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
-export default function LineChartOne2() {
-  const options: ApexOptions = {
+import { IChartDataPoint } from "./LineChartOne1";
+
+interface LineChartOne2Props {
+  data: IChartDataPoint[];
+  onZoom?: (dateFrom: string, dateTo: string) => void;
+}
+
+export default function LineChartOne2({ data, onZoom }: LineChartOne2Props) {
+  const zoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Преобразуем данные для графика
+  const series = useMemo(() => {
+    if (!data || data.length === 0) {
+      return [
+        { name: "По плану", data: [] },
+        { name: "По факту", data: [] },
+      ];
+    }
+
+    const planData = data.map(item => ({
+      x: new Date(item.date).getTime(),
+      y: item.quantityByPlan
+    }));
+    const factData = data.map(item => ({
+      x: new Date(item.date).getTime(),
+      y: item.quantityByFact
+    }));
+
+    return [
+      {
+        name: "По плану",
+        data: planData,
+      },
+      {
+        name: "По факту",
+        data: factData,
+      },
+    ];
+  }, [data]);
+
+  const options: ApexOptions = useMemo(() => ({
     legend: {
-      show: false, // Hide legend
+      show: true, // Show legend
       position: "top",
       horizontalAlign: "left",
     },
@@ -22,7 +60,27 @@ export default function LineChartOne2() {
       height: 310,
       type: "line", // Set the chart type to 'line'
       toolbar: {
-        show: false, // Hide chart toolbar
+        show: true, // Show chart toolbar
+      },
+      zoom: {
+        enabled: true, // Включаем зум
+        type: "x", // По оси X
+        autoScaleYaxis: true, // Автоматическое масштабирование Y при зуме
+      },
+      events: {
+        zoomed: (chartContext, { xaxis }) => {
+          if (onZoom && xaxis.min && xaxis.max) {
+            // Debounce для оптимизации
+            if (zoomTimeoutRef.current) {
+              clearTimeout(zoomTimeoutRef.current);
+            }
+            zoomTimeoutRef.current = setTimeout(() => {
+              const dateFrom = new Date(xaxis.min).toISOString().split('T')[0];
+              const dateTo = new Date(xaxis.max).toISOString().split('T')[0];
+              onZoom(dateFrom, dateTo);
+            }, 300);
+          }
+        },
       },
     },
     stroke: {
@@ -67,21 +125,14 @@ export default function LineChartOne2() {
       },
     },
     xaxis: {
-      type: "category", // Category-based x-axis
-      categories: [
-        "Янв",
-        "Фев",
-        "Мар",
-        "Апр",
-        "Май",
-        "Июн",
-        "Июл",
-        "Авг",
-        "Сен",
-        "Окт",
-        "Ноя",
-        "Дек",
-      ],
+      type: "datetime", // Datetime-based x-axis
+      labels: {
+        datetimeFormatter: {
+          year: "yyyy",
+          month: "MMM",
+          day: "dd MMM",
+        },
+      },
       axisBorder: {
         show: false, // Hide x-axis border
       },
@@ -106,18 +157,7 @@ export default function LineChartOne2() {
         },
       },
     },
-  };
-
-  const series = [
-    {
-      name: "По плану",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
-    },
-    {
-      name: "По факту",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-    },
-  ];
+  }), [onZoom]);
   return (
     <div className="max-w-full overflow-x-auto custom-scrollbar">
       <div id="chartEight" className="min-w-[1000px]">
