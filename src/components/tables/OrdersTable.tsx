@@ -73,6 +73,10 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
   const [shipmentDateToInput, setShipmentDateToInput] = useState<Date | null>(null);
   
   // Input состояния для времени отдельно от даты
+  const [acceptanceDateFromTime, setAcceptanceDateFromTime] = useState<string>('00:00');
+  const [acceptanceDateToTime, setAcceptanceDateToTime] = useState<string>('23:59');
+  const [exportDateFromTime, setExportDateFromTime] = useState<string>('00:00');
+  const [exportDateToTime, setExportDateToTime] = useState<string>('23:59');
   const [shipmentDateFromTime, setShipmentDateFromTime] = useState<string>('00:00');
   const [shipmentDateToTime, setShipmentDateToTime] = useState<string>('23:59');
   
@@ -152,16 +156,20 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       
       // Добавляем фильтры по датам
       if (acceptanceDateFrom) {
-        requestParams.acceptanceDateFrom = formatDateToISO(acceptanceDateFrom, false);
+        const combinedFrom = combineDateAndTime(acceptanceDateFrom, acceptanceDateFromTime);
+        requestParams.acceptanceDateFrom = formatDateToISO(combinedFrom, true);
       }
       if (acceptanceDateTo) {
-        requestParams.acceptanceDateTo = formatDateToISO(acceptanceDateTo, false);
+        const combinedTo = combineDateAndTime(acceptanceDateTo, acceptanceDateToTime);
+        requestParams.acceptanceDateTo = formatDateToISO(combinedTo, true);
       }
       if (exportDateFrom) {
-        requestParams.exportDateFrom = formatDateToISO(exportDateFrom, false);
+        const combinedFrom = combineDateAndTime(exportDateFrom, exportDateFromTime);
+        requestParams.exportDateFrom = formatDateToISO(combinedFrom, true);
       }
       if (exportDateTo) {
-        requestParams.exportDateTo = formatDateToISO(exportDateTo, false);
+        const combinedTo = combineDateAndTime(exportDateTo, exportDateToTime);
+        requestParams.exportDateTo = formatDateToISO(combinedTo, true);
       }
       if (shipmentDateFrom) {
         requestParams.shipmentDateFrom = formatDateToISO(shipmentDateFrom, true);
@@ -351,19 +359,27 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       // Применение фильтров по датам с объединением времени
       if (filterType === 'acceptanceDate') {
         if (acceptanceDateFromInput || acceptanceDateToInput) {
-          setAcceptanceDateFrom(acceptanceDateFromInput);
-          setAcceptanceDateTo(acceptanceDateToInput);
+          const fromDate = combineDateAndTime(acceptanceDateFromInput, acceptanceDateFromTime);
+          const toDate = combineDateAndTime(acceptanceDateToInput, acceptanceDateToTime);
+          setAcceptanceDateFrom(fromDate);
+          setAcceptanceDateTo(toDate);
           setAcceptanceDateFromInput(null);
           setAcceptanceDateToInput(null);
+          setAcceptanceDateFromTime('00:00');
+          setAcceptanceDateToTime('23:59');
           setPage(1);
           setActiveFilterInput(null);
         }
       } else if (filterType === 'exportDate') {
         if (exportDateFromInput || exportDateToInput) {
-          setExportDateFrom(exportDateFromInput);
-          setExportDateTo(exportDateToInput);
+          const fromDate = combineDateAndTime(exportDateFromInput, exportDateFromTime);
+          const toDate = combineDateAndTime(exportDateToInput, exportDateToTime);
+          setExportDateFrom(fromDate);
+          setExportDateTo(toDate);
           setExportDateFromInput(null);
           setExportDateToInput(null);
+          setExportDateFromTime('00:00');
+          setExportDateToTime('23:59');
           setPage(1);
           setActiveFilterInput(null);
         }
@@ -420,9 +436,13 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       if (filterType === 'acceptanceDate') {
         setAcceptanceDateFromInput(acceptanceDateFrom);
         setAcceptanceDateToInput(acceptanceDateTo);
+        setAcceptanceDateFromTime(extractTimeFromDate(acceptanceDateFrom));
+        setAcceptanceDateToTime(extractTimeFromDate(acceptanceDateTo));
       } else if (filterType === 'exportDate') {
         setExportDateFromInput(exportDateFrom);
         setExportDateToInput(exportDateTo);
+        setExportDateFromTime(extractTimeFromDate(exportDateFrom));
+        setExportDateToTime(extractTimeFromDate(exportDateTo));
       } else if (filterType === 'shipmentDate') {
         setShipmentDateFromInput(shipmentDateFrom);
         setShipmentDateToInput(shipmentDateTo);
@@ -526,22 +546,40 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
 
   const formatDateTime = (dateString: string) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const year = date.getUTCFullYear();
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    return `${day}.${month}.${year} ${hours}:${minutes}`;
+    try {
+      const date = new Date(dateString);
+      // Проверяем, что дата валидна и не является дефолтной датой
+      if (isNaN(date.getTime())) return '-';
+      // Проверяем, что это не дефолтная дата (например, 1970-01-01 или очень старая дата)
+      if (date.getUTCFullYear() < 2000) return '-';
+      // Используем UTC методы, чтобы показывать время как пришло с сервера без конвертации в локальный часовой пояс
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const year = date.getUTCFullYear();
+      const hours = String(date.getUTCHours()).padStart(2, '0');
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      return `${day}.${month}.${year} ${hours}:${minutes}`;
+    } catch {
+      return '-';
+    }
   };
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const year = date.getUTCFullYear();
-    return `${day}.${month}.${year}`;
+    try {
+      const date = new Date(dateString);
+      // Проверяем, что дата валидна и не является дефолтной датой
+      if (isNaN(date.getTime())) return '-';
+      // Проверяем, что это не дефолтная дата (например, 1970-01-01 или очень старая дата)
+      if (date.getUTCFullYear() < 2000) return '-';
+      // Используем UTC методы, чтобы показывать время как пришло с сервера без конвертации в локальный часовой пояс
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const year = date.getUTCFullYear();
+      return `${day}.${month}.${year}`;
+    } catch {
+      return '-';
+    }
   };
 
   const formatDateForChip = (date: Date | null, includeTime: boolean = true): string => {
@@ -569,11 +607,11 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       'Тип заказа': order.orderType,
       '№ заказа': order.orderNumber,
       '№ КИС': order.kisNumber || '',
-      'Создан': formatDate(order.exportDate),
+      'Дата выгрузки заказа': formatDate(order.exportDate),
       'Статус': order.status,
       'Контрагент': order.counterparty,
-      'Принят': formatDate(order.acceptanceDate),
-      'Отгружен': formatDateTime(order.shipmentDate),
+      'Заявленная дата отгрузки': formatDateTime(order.shipmentDate),
+      'Дата приемки': formatDateTime(order.acceptanceDate),
       'Упаковок план': order.packagesPlanned,
       'Упаковок факт': order.packagesActual,
       'Строк план': order.linesPlanned,
@@ -615,11 +653,11 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       case 'kisNumber':
         return '№ КИС';
       case 'acceptanceDate':
-        return 'Принят';
+        return 'Дата приемки';
       case 'exportDate':
-        return 'Создан';
+        return 'Дата выгрузки заказа';
       case 'shipmentDate':
-        return 'Отгружен';
+        return 'Заявленная дата отгрузки';
     }
   };
 
@@ -744,7 +782,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('acceptanceDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Принят
+                      Дата приемки
                     </DropdownItem>
                   )}
                   {!hasFilter('exportDate') && activeFilterInput !== 'exportDate' && (
@@ -752,7 +790,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('exportDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Создан
+                      Дата выгрузки заказа
                     </DropdownItem>
                   )}
                   {!hasFilter('shipmentDate') && activeFilterInput !== 'shipmentDate' && (
@@ -760,7 +798,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('shipmentDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Отгружен
+                      Заявленная дата отгрузки
                     </DropdownItem>
                   )}
                 </Dropdown>
@@ -849,66 +887,98 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               <div className="flex items-center gap-2">
                 {activeFilterInput === 'acceptanceDate' && (
                   <>
-                    <div className="relative">
-                      <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
-                      <DatePicker
-                        selected={acceptanceDateFromInput || undefined}
-                        onChange={(date) => setAcceptanceDateFromInput(date)}
-                        selectsStart
-                        startDate={acceptanceDateFromInput || undefined}
-                        endDate={acceptanceDateToInput || undefined}
-                        placeholderText="С"
-                        dateFormat="dd.MM.yyyy"
-                        locale={ru}
-                        className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={acceptanceDateFromInput || undefined}
+                          onChange={(date) => setAcceptanceDateFromInput(date)}
+                          selectsStart
+                          startDate={acceptanceDateFromInput || undefined}
+                          endDate={acceptanceDateToInput || undefined}
+                          placeholderText="С"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={acceptanceDateFromTime}
+                        onChange={(e) => setAcceptanceDateFromTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       />
                     </div>
                     <span className="text-gray-500 dark:text-gray-400">—</span>
-                    <div className="relative">
-                      <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
-                      <DatePicker
-                        selected={acceptanceDateToInput || undefined}
-                        onChange={(date) => setAcceptanceDateToInput(date)}
-                        selectsEnd
-                        startDate={acceptanceDateFromInput || undefined}
-                        endDate={acceptanceDateToInput || undefined}
-                        placeholderText="До"
-                        dateFormat="dd.MM.yyyy"
-                        locale={ru}
-                        className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={acceptanceDateToInput || undefined}
+                          onChange={(date) => setAcceptanceDateToInput(date)}
+                          selectsEnd
+                          startDate={acceptanceDateFromInput || undefined}
+                          endDate={acceptanceDateToInput || undefined}
+                          placeholderText="До"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={acceptanceDateToTime}
+                        onChange={(e) => setAcceptanceDateToTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       />
                     </div>
                   </>
                 )}
                 {activeFilterInput === 'exportDate' && (
                   <>
-                    <div className="relative">
-                      <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
-                      <DatePicker
-                        selected={exportDateFromInput || undefined}
-                        onChange={(date) => setExportDateFromInput(date)}
-                        selectsStart
-                        startDate={exportDateFromInput || undefined}
-                        endDate={exportDateToInput || undefined}
-                        placeholderText="С"
-                        dateFormat="dd.MM.yyyy"
-                        locale={ru}
-                        className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={exportDateFromInput || undefined}
+                          onChange={(date) => setExportDateFromInput(date)}
+                          selectsStart
+                          startDate={exportDateFromInput || undefined}
+                          endDate={exportDateToInput || undefined}
+                          placeholderText="С"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={exportDateFromTime}
+                        onChange={(e) => setExportDateFromTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       />
                     </div>
                     <span className="text-gray-500 dark:text-gray-400">—</span>
-                    <div className="relative">
-                      <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
-                      <DatePicker
-                        selected={exportDateToInput || undefined}
-                        onChange={(date) => setExportDateToInput(date)}
-                        selectsEnd
-                        startDate={exportDateFromInput || undefined}
-                        endDate={exportDateToInput || undefined}
-                        placeholderText="До"
-                        dateFormat="dd.MM.yyyy"
-                        locale={ru}
-                        className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
+                        <DatePicker
+                          selected={exportDateToInput || undefined}
+                          onChange={(date) => setExportDateToInput(date)}
+                          selectsEnd
+                          startDate={exportDateFromInput || undefined}
+                          endDate={exportDateToInput || undefined}
+                          placeholderText="До"
+                          dateFormat="dd.MM.yyyy"
+                          locale={ru}
+                          className="w-48 pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                        />
+                      </div>
+                      <input
+                        type="time"
+                        value={exportDateToTime}
+                        onChange={(e) => setExportDateToTime(e.target.value)}
+                        className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                       />
                     </div>
                   </>
@@ -1142,9 +1212,9 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('acceptanceDate')}
             >
               <span>
-                Принят: {acceptanceDateFrom && formatDateForChip(acceptanceDateFrom, false)}
+                Дата приемки: {acceptanceDateFrom && formatDateForChip(acceptanceDateFrom, true)}
                 {acceptanceDateFrom && acceptanceDateTo && ' — '}
-                {acceptanceDateTo && formatDateForChip(acceptanceDateTo, false)}
+                {acceptanceDateTo && formatDateForChip(acceptanceDateTo, true)}
               </span>
               <button
                 type="button"
@@ -1167,9 +1237,9 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('exportDate')}
             >
               <span>
-                Создан: {exportDateFrom && formatDateForChip(exportDateFrom, false)}
+                Дата выгрузки заказа: {exportDateFrom && formatDateForChip(exportDateFrom, true)}
                 {exportDateFrom && exportDateTo && ' — '}
-                {exportDateTo && formatDateForChip(exportDateTo, false)}
+                {exportDateTo && formatDateForChip(exportDateTo, true)}
               </span>
               <button
                 type="button"
@@ -1192,7 +1262,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('shipmentDate')}
             >
               <span>
-                Отгружен: {shipmentDateFrom && formatDateForChip(shipmentDateFrom, true)}
+                Заявленная дата отгрузки: {shipmentDateFrom && formatDateForChip(shipmentDateFrom, true)}
                 {shipmentDateFrom && shipmentDateTo && ' — '}
                 {shipmentDateTo && formatDateForChip(shipmentDateTo, true)}
               </span>
@@ -1264,8 +1334,25 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('exportDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Создан
+                    Дата выгрузки заказа
                     {sortBy === 'exportDate' && (
+                      <span className="text-brand-500">
+                        {sortOrder === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </button>
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleSort('shipmentDate')}
+                    className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Заявленная дата отгрузки
+                    {sortBy === 'shipmentDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
                       </span>
@@ -1293,25 +1380,8 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('acceptanceDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Принят
+                    Дата приемки
                     {sortBy === 'acceptanceDate' && (
-                      <span className="text-brand-500">
-                        {sortOrder === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </button>
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
-                  <button
-                    type="button"
-                    onClick={() => handleSort('shipmentDate')}
-                    className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-                  >
-                    Отгружен
-                    {sortBy === 'shipmentDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
                       </span>
@@ -1393,7 +1463,11 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatDate(order.exportDate)}
+                        {formatDateTime(order.exportDate)}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {formatDateTime(order.shipmentDate)}
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
@@ -1407,11 +1481,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatDate(order.acceptanceDate)}
-                      </TableCell>
-
-                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatDateTime(order.shipmentDate)}
+                        {formatDateTime(order.acceptanceDate)}
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-center text-theme-xs dark:text-gray-400 whitespace-nowrap">

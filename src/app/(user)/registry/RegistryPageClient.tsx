@@ -97,7 +97,7 @@ export default function RegistryPageClient() {
       <PageBreadcrumb pageTitle="Транспорт" />
       <div className="space-y-6">
         <ComponentCard 
-          title="Реестр заказов"
+          title="Реестр транспортных средств"
           action={
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-end gap-0.5 text-sm text-gray-600 dark:text-gray-400">

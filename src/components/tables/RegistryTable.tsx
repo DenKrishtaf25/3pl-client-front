@@ -617,7 +617,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
       'Контрагент': registry.counterparty,
       'Номер ТС': registry.vehicleNumber || '',
       'Тип прихода': registry.orderType,
-      'Номер заказа': registry.orderNumber,
+      'Номер рейса': registry.orderNumber,
       'ФИО водителя': registry.driverName || '',
       'Тип обработки': registry.processingType || '',
       'Дата планового прибытия': formatDateTime(registry.shipmentPlan),
@@ -657,7 +657,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
       case 'driverName':
         return 'ФИО водителя';
       case 'orderNumber':
-        return 'Номер заказа';
+        return 'Номер рейса';
       case 'orderType':
         return 'Тип прихода';
       case 'status':
@@ -778,7 +778,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                       onItemClick={() => handleFilterSelect('orderNumber')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Номер заказа
+                      Номер рейса
                     </DropdownItem>
                   )}
                   {!hasFilter('orderType') && activeFilterInput !== 'orderType' && (
@@ -1181,7 +1181,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
               onClick={() => handleEditFilter('orderNumber')}
             >
-              <span>Номер заказа: {orderNumber}</span>
+              <span>Номер рейса: {orderNumber}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -1363,6 +1363,12 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                 </TableCell>
               <TableCell
                 isHeader
+                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                >
+                  Статус ТС
+              </TableCell>
+              <TableCell
+                isHeader
                 className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
               >
                   Тип прихода
@@ -1376,7 +1382,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                     onClick={() => handleSort('orderNumber')}
                   className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
-                    Номер заказа
+                    Номер рейса
                     {sortBy === 'orderNumber' && (
                     <span className="text-brand-500">
                       {sortOrder === 'asc' ? '↑' : '↓'}
@@ -1447,12 +1453,6 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                     )}
                   </button>
               </TableCell>
-              <TableCell
-                isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
-                  Статус ТС
-              </TableCell>
             </TableRow>
           </TableHeader>
 
@@ -1499,6 +1499,12 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                       <RussianLicensePlate plateNumber={registry.vehicleNumber || ''} />
                     </TableCell>
 
+                    <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                        {registry.status}
+                      </span>
+                    </TableCell>
+
                     <TableCell className="px-3 py-2 text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap">
                       {registry.orderType}
                     </TableCell>
@@ -1525,12 +1531,6 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
 
                     <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
                       {registry.departureDate ? formatDateTime(registry.departureDate) : '-'}
-                    </TableCell>
-
-                    <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                        {registry.status}
-                      </span>
                     </TableCell>
                   </TableRow>
                 ))
