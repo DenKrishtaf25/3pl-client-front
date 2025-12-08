@@ -151,3 +151,17 @@ export interface IFinanceQueryParams {
     dateTo?: string // Дата до (ISO format: YYYY-MM-DD)
     amountFrom?: number // Минимальная сумма
 }
+
+export interface IComplaintQueryParams {
+    search?: string
+    page?: number
+    limit?: number
+    sortBy?: 'creationDate' | 'complaintNumber' | 'complaintType' | 'status'
+    sortOrder?: 'asc' | 'desc'
+    branch?: string // Фильтр по филиалу
+    status?: string // Фильтр по статусу
+    complaint_type?: string // Фильтр по типу претензии (snake_case для API)
+    dateFrom?: string // Дата с (ISO format: YYYY-MM-DD)
+    dateTo?: string // Дата до (ISO format: YYYY-MM-DD)
+    confirmation?: boolean // Фильтр по подтверждению
+}

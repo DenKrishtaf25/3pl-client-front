@@ -12,22 +12,22 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { financeService, IFinance } from "@/services/finance.service";
-import { IPaginationMeta, IFinanceQueryParams } from "@/types/auth.types";
+import { complaintsService, IComplaint } from "@/services/complaints.service";
+import { IPaginationMeta, IComplaintQueryParams } from "@/types/auth.types";
 import Pagination from "./Pagination";
 import { exportToExcel } from "@/utils/excelExport";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
 
-type FilterType = 'branch' | 'status' | 'date' | 'amountFrom';
+type FilterType = 'branch' | 'status' | 'date' | 'complaint_type' | 'confirmation';
 
-interface FinanceTableProps {
+interface ComplaintsTableProps {
   onExportReady?: (exportFn: () => void) => void;
 }
 
-export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) {
-  const [finance, setFinance] = useState<IFinance[]>([]);
+export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps = {}) {
+  const [complaints, setComplaints] = useState<IComplaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [meta, setMeta] = useState<IPaginationMeta | null>(null);
@@ -35,13 +35,14 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
   // Пагинация и сортировка
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
+  const [sortBy, setSortBy] = useState<'creationDate' | 'complaintNumber' | 'complaintType' | 'status'>('creationDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Фильтры по колонкам
   const [branch, setBranch] = useState('');
   const [status, setStatus] = useState('');
-  const [amountFrom, setAmountFrom] = useState('');
+  const [complaint_type, setComplaintType] = useState('');
+  const [confirmation, setConfirmation] = useState<boolean | null>(null);
   
   // Фильтры по датам (применённые значения)
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
@@ -50,7 +51,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
   // Input состояния для фильтров (текстовые)
   const [branchInput, setBranchInput] = useState('');
   const [statusInput, setStatusInput] = useState('');
-  const [amountFromInput, setAmountFromInput] = useState('');
+  const [complaintTypeInput, setComplaintTypeInput] = useState('');
   
   // Input состояния для фильтров по датам (временные, до применения)
   const [dateFromInput, setDateFromInput] = useState<Date | null>(null);
@@ -72,20 +73,21 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     return `${year}-${month}-${day}`;
   };
 
-  const loadFinance = useCallback(async () => {
+  const loadComplaints = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
       // Формируем параметры запроса
-      const requestParams: IFinanceQueryParams = {
+      const requestParams: IComplaintQueryParams = {
         page,
         limit,
         sortBy,
         sortOrder,
         branch: branch || undefined,
         status: status || undefined,
-        amountFrom: amountFrom ? parseFloat(amountFrom) : undefined,
+        complaint_type: complaint_type || undefined,
+        confirmation: confirmation !== null ? confirmation : undefined,
       };
       
       // Добавляем фильтры по датам
@@ -97,19 +99,19 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
       }
       
       // Загружаем данные
-      const response = await financeService.getPaginated(requestParams);
+      const response = await complaintsService.getPaginated(requestParams);
       
       // Обработка пагинированного ответа
       if (response && 'data' in response && Array.isArray(response.data)) {
-        setFinance(response.data || []);
+        setComplaints(response.data || []);
         setMeta(response.meta || null);
       } else if (Array.isArray(response)) {
         // Fallback для старого API
-        setFinance(response || []);
+        setComplaints(response || []);
         setMeta(null);
       } else {
         console.warn('Unexpected response format:', response);
-        setFinance([]);
+        setComplaints([]);
         setMeta(null);
       }
     } catch (err: unknown) {
@@ -117,7 +119,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         (err.code === 'ERR_NETWORK' || err.code === 'ERR_CONNECTION_REFUSED');
       
       if (!isNetworkError) {
-        console.error('Failed to load finance:', err);
+        console.error('Failed to load complaints:', err);
       }
       
       if (isNetworkError) {
@@ -126,16 +128,16 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         setError('Ошибка при загрузке данных');
       }
       
-      setFinance([]);
+      setComplaints([]);
       setMeta(null);
     } finally {
       setLoading(false);
     }
-  }, [page, limit, sortBy, sortOrder, branch, status, amountFrom, dateFrom, dateTo]);
+  }, [page, limit, sortBy, sortOrder, branch, status, complaint_type, confirmation, dateFrom, dateTo]);
 
   useEffect(() => {
-    loadFinance();
-  }, [loadFinance]);
+    loadComplaints();
+  }, [loadComplaints]);
 
   // Обработчики для фильтров
   const handleFilterSelect = (filterType: FilterType) => {
@@ -151,8 +153,8 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
       case 'status':
         setStatusInput(value);
         break;
-      case 'amountFrom':
-        setAmountFromInput(value);
+      case 'complaint_type':
+        setComplaintTypeInput(value);
         break;
     }
   };
@@ -163,8 +165,8 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         return branchInput;
       case 'status':
         return statusInput;
-      case 'amountFrom':
-        return amountFromInput;
+      case 'complaint_type':
+        return complaintTypeInput;
       case 'date':
         return '';
       default:
@@ -178,8 +180,8 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         return branch;
       case 'status':
         return status;
-      case 'amountFrom':
-        return amountFrom;
+      case 'complaint_type':
+        return complaint_type;
       case 'date':
         return '';
       default:
@@ -197,9 +199,9 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         setStatus(value);
         setStatusInput('');
         break;
-      case 'amountFrom':
-        setAmountFrom(value);
-        setAmountFromInput('');
+      case 'complaint_type':
+        setComplaintType(value);
+        setComplaintTypeInput('');
         break;
     }
   };
@@ -254,8 +256,8 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         case 'status':
           setStatusInput(currentValue);
           break;
-        case 'amountFrom':
-          setAmountFromInput(currentValue);
+        case 'complaint_type':
+          setComplaintTypeInput(currentValue);
           break;
       }
     }
@@ -265,6 +267,8 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     if (filterType === 'date') {
       setDateFrom(null);
       setDateTo(null);
+    } else if (filterType === 'confirmation') {
+      setConfirmation(null);
     } else {
       setFilterValue(filterType, '');
     }
@@ -276,8 +280,9 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     setBranchInput('');
     setStatus('');
     setStatusInput('');
-    setAmountFrom('');
-    setAmountFromInput('');
+    setComplaintType('');
+    setComplaintTypeInput('');
+    setConfirmation(null);
     setDateFrom(null);
     setDateTo(null);
     setDateFromInput(null);
@@ -290,7 +295,8 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
   const activeFiltersCount = [
     branch, 
     status, 
-    amountFrom,
+    complaint_type,
+    confirmation !== null ? 'confirmation' : null,
     dateFrom || dateTo ? 'date' : null
   ].filter(Boolean).length;
 
@@ -320,13 +326,41 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     };
   }, [isFiltersDropdownOpen, isLimitDropdownOpen]);
 
+
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
-    const day = String(date.getUTCDate()).padStart(2, '0');
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const year = date.getUTCFullYear();
-    return `${day}.${month}.${year}`;
+    try {
+      const date = new Date(dateString);
+      // Проверяем, что дата валидна
+      if (isNaN(date.getTime())) return '-';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}.${month}.${year}`;
+    } catch {
+      return '-';
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      // Проверяем, что дата валидна
+      if (isNaN(date.getTime())) return '-';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      // Показываем время только если оно не 00:00
+      if (hours === '00' && minutes === '00') {
+        return `${day}.${month}.${year}`;
+      }
+      return `${day}.${month}.${year} ${hours}:${minutes}`;
+    } catch {
+      return '-';
+    }
   };
 
   const formatDateForChip = (date: Date | null): string => {
@@ -337,33 +371,26 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     return `${day}.${month}.${year}`;
   };
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const handleExport = useCallback(() => {
-    if (finance.length === 0) {
+    if (complaints.length === 0) {
       alert('Нет данных для экспорта');
       return;
     }
 
     // Форматируем данные для экспорта
-    const exportData = finance.map((item) => ({
+    const exportData = complaints.map((item) => ({
       'Филиал': item.branch,
+      'Клиент': item.client,
+      'Дата создания': formatDate(item.creationDate),
+      'Номер рекламации': item.complaintNumber,
+      'Тип претензии': item.complaintType,
       'Статус': item.status,
-      'Дата': formatDate(item.date),
-      'Сумма': item.amount,
-      '№ заказа': item.orderNumber || '',
-      'Описание': item.description || '',
+      'Подтверждение': item.confirmation ? 'Да' : 'Нет',
+      'ИНН клиента': item.clientTIN,
     }));
 
-    exportToExcel(exportData, `Финансы_${new Date().toISOString().split('T')[0]}`);
-  }, [finance]);
+    exportToExcel(exportData, `Рекламации_${new Date().toISOString().split('T')[0]}`);
+  }, [complaints]);
 
   // Передаем функцию экспорта наружу
   useEffect(() => {
@@ -372,7 +399,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     }
   }, [onExportReady, handleExport]);
 
-  const handleSort = (field: 'date' | 'amount') => {
+  const handleSort = (field: 'creationDate' | 'complaintNumber' | 'complaintType' | 'status') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -390,14 +417,19 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         return 'Статус';
       case 'date':
         return 'Дата';
-      case 'amountFrom':
-        return 'Сумма от';
+      case 'complaint_type':
+        return 'Тип претензии';
+      case 'confirmation':
+        return 'Подтверждение';
     }
   };
 
   const hasFilter = (filterType: FilterType): boolean => {
     if (filterType === 'date') {
       return !!(dateFrom || dateTo);
+    }
+    if (filterType === 'confirmation') {
+      return confirmation !== null;
     }
     return !!getFilterValue(filterType);
   };
@@ -481,12 +513,20 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                       Дата
                     </DropdownItem>
                   )}
-                  {!hasFilter('amountFrom') && activeFilterInput !== 'amountFrom' && (
+                  {!hasFilter('complaint_type') && activeFilterInput !== 'complaint_type' && (
                     <DropdownItem
-                      onItemClick={() => handleFilterSelect('amountFrom')}
+                      onItemClick={() => handleFilterSelect('complaint_type')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Сумма от
+                      Тип претензии
+                    </DropdownItem>
+                  )}
+                  {!hasFilter('confirmation') && activeFilterInput !== 'confirmation' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('confirmation')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Подтверждение
                     </DropdownItem>
                   )}
                 </Dropdown>
@@ -570,7 +610,57 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         {/* Инпут для активного фильтра - над чипсами */}
         {activeFilterInput && (
           <div className="flex items-center gap-2">
-            {isDateFilter(activeFilterInput) ? (
+            {activeFilterInput === 'confirmation' ? (
+              // UI для фильтра подтверждения
+              <div className="flex items-center gap-2">
+                <select
+                  value={confirmation === null ? '' : confirmation ? 'true' : 'false'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      setConfirmation(null);
+                    } else {
+                      setConfirmation(value === 'true');
+                    }
+                  }}
+                  className="h-11 w-48 rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-theme-xs bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-900 dark:text-white focus:outline-hidden focus:ring-3 focus:border-brand-300 focus:ring-brand-500/10 dark:focus:border-brand-800"
+                >
+                  <option value="">Выберите...</option>
+                  <option value="true">Подтверждено</option>
+                  <option value="false">Не подтверждено</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (confirmation !== null) {
+                      setPage(1);
+                      setActiveFilterInput(null);
+                    }
+                  }}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={confirmation === null}
+                  aria-label="Применить фильтр"
+                >
+                  <CheckLineIcon />
+                </button>
+                {confirmation !== null && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfirmation(null);
+                      setPage(1);
+                      setActiveFilterInput(null);
+                    }}
+                    className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="Очистить фильтр"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ) : isDateFilter(activeFilterInput) ? (
               // UI для фильтров по датам
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -616,7 +706,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               // UI для текстовых фильтров
               <>
                 <input
-                  type={activeFilterInput === 'amountFrom' ? 'number' : 'text'}
+                  type="text"
                   placeholder={`Поиск в поле ${getFilterLabel(activeFilterInput).toLowerCase()}`}
                   value={getFilterInputValue(activeFilterInput)}
                   onChange={(e) => handleFilterInputChange(activeFilterInput, e.target.value)}
@@ -688,17 +778,17 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               </button>
             </div>
           )}
-          {amountFrom && (
+          {complaint_type && (
             <div 
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-              onClick={() => handleEditFilter('amountFrom')}
+              onClick={() => handleEditFilter('complaint_type')}
             >
-              <span>Сумма от: {formatAmount(parseFloat(amountFrom))}</span>
+              <span>Тип претензии: {complaint_type}</span>
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleRemoveFilter('amountFrom');
+                  handleRemoveFilter('complaint_type');
                 }}
                 className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
                 aria-label="Удалить фильтр"
@@ -734,12 +824,33 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               </button>
             </div>
           )}
+          {confirmation !== null && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('confirmation')}
+            >
+              <span>Подтверждение: {confirmation ? 'Да' : 'Нет'}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('confirmation');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[800px]">
+          <div className="min-w-[1000px]">
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
@@ -753,7 +864,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                     isHeader
                     className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                   >
-                    Статус
+                    Клиент
                   </TableCell>
                   <TableCell
                     isHeader
@@ -761,11 +872,11 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   >
                     <button
                       type="button"
-                      onClick={() => handleSort('date')}
+                      onClick={() => handleSort('creationDate')}
                       className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     >
-                      Дата
-                      {sortBy === 'date' && (
+                      Дата создания
+                      {sortBy === 'creationDate' && (
                         <span className="text-brand-500">
                           {sortOrder === 'asc' ? '↑' : '↓'}
                         </span>
@@ -778,11 +889,11 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   >
                     <button
                       type="button"
-                      onClick={() => handleSort('amount')}
+                      onClick={() => handleSort('complaintNumber')}
                       className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     >
-                      Сумма
-                      {sortBy === 'amount' && (
+                      Номер рекламации
+                      {sortBy === 'complaintNumber' && (
                         <span className="text-brand-500">
                           {sortOrder === 'asc' ? '↑' : '↓'}
                         </span>
@@ -793,13 +904,41 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                     isHeader
                     className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                   >
-                    № заказа
+                    <button
+                      type="button"
+                      onClick={() => handleSort('complaintType')}
+                      className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      Тип претензии
+                      {sortBy === 'complaintType' && (
+                        <span className="text-brand-500">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </button>
                   </TableCell>
                   <TableCell
                     isHeader
-                    className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                    className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                   >
-                    Описание
+                    <button
+                      type="button"
+                      onClick={() => handleSort('status')}
+                      className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      Статус
+                      {sortBy === 'status' && (
+                        <span className="text-brand-500">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </button>
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                  >
+                    Подтверждение
                   </TableCell>
                 </TableRow>
               </TableHeader>
@@ -807,7 +946,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center">
+                    <TableCell colSpan={7} className="px-4 py-8 text-center">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                         <span className="ml-2 text-gray-600 dark:text-gray-400">Загрузка данных...</span>
@@ -816,25 +955,41 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center">
+                    <TableCell colSpan={7} className="px-4 py-8 text-center">
                       <div className="text-red-600 dark:text-red-400">{error}</div>
                     </TableCell>
                   </TableRow>
-                ) : !finance || finance.length === 0 ? (
+                ) : !complaints || complaints.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center">
+                    <TableCell colSpan={7} className="px-4 py-8 text-center">
                       <div className="text-gray-500 dark:text-gray-400">
-                        {(branch || status || amountFrom || dateFrom || dateTo)
+                        {(branch || status || complaint_type || confirmation !== null || dateFrom || dateTo)
                           ? 'Ничего не найдено по выбранным фильтрам'
                           : 'Нет данных'}
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  finance.map((item) => (
+                  complaints.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell className="px-3 py-2 text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {item.branch}
+                        {item.branch || '-'}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-start text-theme-xs dark:text-gray-400 max-w-[200px] truncate">
+                        {item.client || '-'}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {item.creationDate ? formatDateTime(item.creationDate) : '-'}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {item.complaintNumber || '-'}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {item.complaintType || '-'}
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
@@ -843,20 +998,14 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                         </span>
                       </TableCell>
 
-                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatDate(item.date)}
-                      </TableCell>
-
-                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatAmount(item.amount)}
-                      </TableCell>
-
-                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {item.orderNumber || '-'}
-                      </TableCell>
-
-                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 max-w-[200px] truncate">
-                        {item.description || '-'}
+                      <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          item.confirmation 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
+                        }`}>
+                          {item.confirmation ? 'Да' : 'Нет'}
+                        </span>
                       </TableCell>
                     </TableRow>
                   ))

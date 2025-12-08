@@ -1,25 +1,11 @@
-import ComponentCard from "@/components/common/ComponentCard";
-import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import Faq from "@/components/tables/Faq";
+import ComplaintsPageClient from "./ComplaintsPageClient";
 import { Metadata } from "next";
-import React from "react";
 
 export const metadata: Metadata = {
-  title: "ПЭК:3PL",
-  description:
-    "ПЭК:3PL",
-  // other metadata
+  title: "ПЭК:3PL - Рекламации",
+  description: "ПЭК:3PL - Управление рекламациями",
 };
 
-export default function BasicTables() {
-  return (
-    <div>
-      <PageBreadcrumb pageTitle="Рекламации" />
-      <div className="space-y-6">
-        <ComponentCard title="">
-          <Faq />
-        </ComponentCard>
-      </div>
-    </div>
-  );
+export default function ComplaintsPage() {
+  return <ComplaintsPageClient />;
 }
