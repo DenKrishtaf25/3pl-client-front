@@ -70,7 +70,7 @@ export default function BasicTableOne() {
         className="flex gap-1 px-2 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
         >
         <Plus size={20} />
-        Написать притензию
+        Написать претензию
       </button>
 
 
@@ -78,7 +78,7 @@ export default function BasicTableOne() {
         <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-6 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Подача притензии
+              Подача претензии
             </h4>
           </div>
           <form className="flex flex-col">

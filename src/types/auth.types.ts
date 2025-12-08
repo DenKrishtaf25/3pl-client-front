@@ -138,3 +138,16 @@ export interface IOrderQueryParams {
     status?: string // Фильтр по статусу
     kisNumber?: string // Фильтр по номеру КИС
 }
+
+export interface IFinanceQueryParams {
+    search?: string
+    page?: number
+    limit?: number
+    sortBy?: 'date' | 'amount'
+    sortOrder?: 'asc' | 'desc'
+    branch?: string // Фильтр по филиалу
+    status?: string // Фильтр по статусу
+    dateFrom?: string // Дата с (ISO format: YYYY-MM-DD)
+    dateTo?: string // Дата до (ISO format: YYYY-MM-DD)
+    amountFrom?: number // Минимальная сумма
+}

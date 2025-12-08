@@ -29,7 +29,7 @@ export default function SmartTextArea() {
 
   return (
       <div className="space-y-2">
-        <Label>Опишите вашу притензию</Label>
+        <Label>Опишите вашу претензию</Label>
         <TextArea
           value={value}
           onChange={handleChange}
