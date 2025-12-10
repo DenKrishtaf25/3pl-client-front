@@ -1,11 +1,13 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import { Users, Building2 } from "lucide-react";
 
 interface Person {
   id: string;
   name: string;
   position: string;
+  email?: string;
   avatar?: string;
   isPartner?: boolean;
 }
@@ -58,9 +60,11 @@ const CardComponent: React.FC<CardComponentProps> = ({ item, level }) => {
         <div className="flex items-center gap-2 mb-2">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-medium text-xs flex-shrink-0">
             {item.leader.avatar ? (
-              <img
+              <Image
                 src={item.leader.avatar}
                 alt={item.leader.name}
+                width={36}
+                height={36}
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (
@@ -68,15 +72,14 @@ const CardComponent: React.FC<CardComponentProps> = ({ item, level }) => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
               {item.leader.name}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-              {item.leader.position}
-              {item.leader.isPartner && (
-                <span className="ml-1 text-blue-600 dark:text-blue-400">• Партнер</span>
-              )}
-            </p>
+            {item.leader.email && (
+              <p className="text-xs text-gray-600 dark:text-gray-400 break-all">
+                {item.leader.email}
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -105,9 +108,11 @@ const CardComponent: React.FC<CardComponentProps> = ({ item, level }) => {
               title={employee.name}
             >
               {employee.avatar ? (
-                <img
+                <Image
                   src={employee.avatar}
                   alt={employee.name}
+                  width={32}
+                  height={32}
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
@@ -213,208 +218,236 @@ const TreeNode: React.FC<TreeNodeProps> = ({ item, level, expandedItems, onToggl
   );
 };
 
-// Пример данных
+// Данные контактов ПЭК
 const contactsData: ContactItem = {
   id: "company",
-  name: "Компания",
+  name: "ООО \"ПЭК: Складская логистика\"",
   type: "company",
   leader: {
-    id: "leader-1",
-    name: "Елена Андреева",
-    position: "CEO, Partner",
-    isPartner: true,
+    id: "masalov-iv",
+    name: "Масалов Иван Викторович",
+    position: "Директор, ООО \"ПЭК: Складская логистика\"",
+    email: "masalov.iv@pecom.ru",
   },
-  employeesCount: 7,
+  employeesCount: 20,
   children: [
     {
-      id: "rnd",
-      name: "R&D",
+      id: "operational-director",
+      name: "Операционный директор",
       type: "department",
       leader: {
-        id: "leader-2",
-        name: "Михаил Веллер",
-        position: "Технический директор, партн...",
-        isPartner: true,
+        id: "bardakov-ea",
+        name: "Бардаков Евгений Алексеевич",
+        position: "Операционный директор",
+        email: "bardakov.ea@pecom.ru",
       },
-      employeesCount: 6,
+      subDepartmentsCount: 9,
+      children: [
+        {
+          id: "branch-chekhov",
+          name: "Филиал Чехов",
+          type: "subdepartment",
+          leader: {
+            id: "gurichev-vv",
+            name: "Гуричев Вячеслав Вячеславович",
+            position: "Директор филиала, Чехов",
+            email: "gurichev.vv@pecom.ru",
+          },
+        },
+        {
+          id: "branch-krasnodar",
+          name: "Филиал Краснодар",
+          type: "subdepartment",
+          leader: {
+            id: "krisanov-uv",
+            name: "Крисанов Юрий Васильевич",
+            position: "Директор филиала, Краснодар",
+            email: "krisanov.uv@pecom.ru",
+          },
+        },
+        {
+          id: "branch-litvinovo",
+          name: "Филиал Литвиново",
+          type: "subdepartment",
+          leader: {
+            id: "nazarov-dva",
+            name: "Назаров Денис Валерьевич",
+            position: "Директор филиала, Литвиново, Литвиново-ОБИ",
+            email: "nazarov.dva@pecom.ru",
+          },
+        },
+        {
+          id: "branch-tomilino",
+          name: "Филиал Томилино",
+          type: "subdepartment",
+          leader: {
+            id: "sapronov-vn",
+            name: "Сапронов Владимир Николаевич",
+            position: "Директор филиала, Томилино",
+            email: "sapronov.vn@pecom.ru",
+          },
+        },
+        {
+          id: "branch-sholokhovo-krasnoyarsk",
+          name: "Филиалы Шолохово, Красноярск",
+          type: "subdepartment",
+          leader: {
+            id: "kananin-ds",
+            name: "Кананин Дмитрий Сергеевич",
+            position: "Заместитель операционного директора/Директор филиала, Шолохово, Красноярск",
+            email: "kananin.ds@pecom.ru",
+          },
+        },
+        {
+          id: "branch-samara-kazan",
+          name: "Филиалы Самара, Казань",
+          type: "subdepartment",
+          leader: {
+            id: "belyaev-ig",
+            name: "Беляев Игорь Геннадьевич",
+            position: "Заместитель операционного директора/Директор филиала, Самара, Казань",
+            email: "belyaev.ig@pecom.ru",
+          },
+        },
+        {
+          id: "branch-multiple",
+          name: "Множественные филиалы",
+          type: "subdepartment",
+          leader: {
+            id: "chabiev-gu",
+            name: "Чабиев Георгий Ушангович",
+            position: "Сменный директор филиала/Директор филиала, Алматы, Иркутск, Магадан, Новосибирск, Пермь, Пятигорск, Санкт-Петербург, Ставрополь, Уссурийск, Челябинск, Бутово",
+            email: "chabiev.gu@pecom.ru",
+          },
+        },
+        {
+          id: "branch-chekhov-2",
+          name: "Филиал Чехов-2",
+          type: "subdepartment",
+          leader: {
+            id: "viskov-po",
+            name: "Висков Платон Олегович",
+            position: "Сменный директор филиала, Чехов-2",
+            email: "viskov.po@pecom.ru",
+          },
+        },
+        {
+          id: "branch-nizhny-novgorod",
+          name: "Филиал Нижний Новгород",
+          type: "subdepartment",
+          leader: {
+            id: "frolov-da",
+            name: "Фролов Дмитрий Александрович",
+            position: "ИО директора филиала/Начальник склада, Нижний Новгород",
+            email: "frolov.da@pecom.ru",
+          },
+        },
+      ],
+    },
+    {
+      id: "service-director",
+      name: "Директор службы",
+      type: "department",
+      leader: {
+        id: "belykh-vm",
+        name: "Белых Вадим Михайлович",
+        position: "Директор службы",
+        email: "belykh.vm@pecom.ru",
+      },
       subDepartmentsCount: 2,
       children: [
         {
-          id: "production",
-          name: "Производство",
+          id: "customer-support",
+          name: "Отдел сопровождения клиентов",
           type: "subdepartment",
           leader: {
-            id: "leader-3",
-            name: "Виктория Апрельская",
-            position: "Руководитель проектов, п...",
-            isPartner: true,
+            id: "koroleva-vv",
+            name: "Королева Виктория Владимировна",
+            position: "Руководитель отдела, Отдел сопровождения клиентов",
+            email: "koroleva.vv@pecom.ru",
           },
-          employeesCount: 1,
-          subDepartmentsCount: 8,
         },
         {
-          id: "support",
-          name: "Техподдержка",
+          id: "development",
+          name: "Отдел развития",
           type: "subdepartment",
           leader: {
-            id: "leader-4",
-            name: "Виктория Апрельская",
-            position: "Руководитель направлени...",
+            id: "kamenskaya-yv",
+            name: "Каменская Юлия Владимировна",
+            position: "Руководитель отдела, Отдел развития",
+            email: "kamenskaya.yv@pecom.ru",
           },
         },
       ],
     },
     {
-      id: "marketing",
-      name: "Маркетинг РУ",
+      id: "technology-direction",
+      name: "Направление технологий",
       type: "department",
       leader: {
-        id: "leader-5",
-        name: "Дмитрий Понамарев",
-        position: "Директор",
+        id: "bukh-bi",
+        name: "Бух Борис Игоревич",
+        position: "Руководитель направления, Направление технологий",
+        email: "bukh.bi@pecom.ru",
       },
+      subDepartmentsCount: 2,
       children: [
         {
-          id: "marketing-dept",
-          name: "Маркетинг",
+          id: "tech-development",
+          name: "Отдел разработки технологий",
           type: "subdepartment",
           leader: {
-            id: "leader-6",
-            name: "Полина Аркадова",
-            position: "Заместитель директора п...",
+            id: "stefanenkov-aa",
+            name: "Стефаненков Алексей Андреевич",
+            position: "Начальник отдела, Отдел разработки технологий",
+            email: "stefanenkov.aa@pecom.ru",
           },
-          subDepartmentsCount: 9,
-        },
-      ],
-    },
-    {
-      id: "finance",
-      name: "Финансы",
-      type: "department",
-      leader: {
-        id: "leader-7",
-        name: "Зинаида Милова",
-        position: "Финдиректор, партнер",
-        isPartner: true,
-      },
-      employeesCount: 1,
-      children: [
-        {
-          id: "accounting",
-          name: "Бухгалтерия",
-          type: "subdepartment",
-          leader: {
-            id: "leader-8",
-            name: "Галина Щедрая",
-            position: "Руководитель",
-          },
-          subDepartmentsCount: 6,
         },
         {
-          id: "finance-west",
-          name: "Фин. отдел Запад",
+          id: "wms-support",
+          name: "Группа поддержки WMS",
           type: "subdepartment",
           leader: {
-            id: "leader-9",
-            name: "Николай Ростов",
-            position: "Финдиректор зап.направл...",
-          },
-          employeesCount: 2,
-        },
-      ],
-    },
-    {
-      id: "sales",
-      name: "Партнеры и продажи",
-      type: "department",
-      leader: {
-        id: "leader-10",
-        name: "Екатерина Милютина",
-        position: "Переговорщик, партнер",
-        isPartner: true,
-      },
-      children: [
-        {
-          id: "sales-dept",
-          name: "Отдел продаж",
-          type: "subdepartment",
-          leader: {
-            id: "leader-11",
-            name: "Эльвира Бренда",
-            position: "Руководитель отдела прод...",
-          },
-          subDepartmentsCount: 2,
-        },
-        {
-          id: "partners",
-          name: "Партнерский отдел",
-          type: "subdepartment",
-          leader: {
-            id: "leader-12",
-            name: "Маргарита Юсупова",
-            position: "руководитель партнёрско...",
-          },
-          employeesCount: 14,
-        },
-      ],
-    },
-    {
-      id: "rental",
-      name: "Арендные решения",
-      type: "department",
-      leader: {
-        id: "leader-13",
-        name: "Никита Морозов",
-        position: "сапер-иллюзионист",
-      },
-      employeesCount: 6,
-      children: [
-        {
-          id: "methodology",
-          name: "Методология внедрен...",
-          type: "subdepartment",
-          leader: {
-            id: "leader-14",
-            name: "Эльвира Штокина",
-            position: "Head of Data Science",
+            id: "ermakova-tv",
+            name: "Ермакова Таисия Валерьевна",
+            position: "Руководитель группы, Группа поддержки WMS",
+            email: "ermakova.tv@pecom.ru",
           },
         },
       ],
     },
     {
-      id: "hr",
-      name: "HR",
+      id: "analytics",
+      name: "Отдел аналитики и моделирования",
       type: "department",
       leader: {
-        id: "leader-15",
-        name: "Максим Филатов",
-        position: "HR Director",
+        id: "lankin-ay",
+        name: "Ланкин Андрей Юрьевич",
+        position: "Руководитель отдела, Отдел аналитики и моделирования",
+        email: "lankin.ay@pecom.ru",
       },
-      employeesCount: 3,
-      children: [
-        {
-          id: "adaptation",
-          name: "Адаптация перо",
-          type: "subdepartment",
-          leader: {
-            id: "leader-16",
-            name: "Валерий Ник",
-            position: "HR People Partr",
-          },
-          employeesCount: 2,
-        },
-        {
-          id: "admin",
-          name: "Администриров",
-          type: "subdepartment",
-          leader: {
-            id: "leader-17",
-            name: "Мария Ким",
-            position: "HR-Admin",
-          },
-          employeesCount: 2,
-        },
-      ],
+    },
+    {
+      id: "quality-control",
+      name: "Отдел контроля качества",
+      type: "department",
+      leader: {
+        id: "pankov-sm",
+        name: "Панков Сергей Михайлович",
+        position: "Руководитель отдела, Отдел контроля качества",
+        email: "pankov.sm@pecom.ru",
+      },
+    },
+    {
+      id: "projects",
+      name: "Руководитель проектов",
+      type: "department",
+      leader: {
+        id: "skrypnikov-mo",
+        name: "Скрыпников Максим Олегович",
+        position: "Руководитель проектов",
+        email: "skrypnikov.mo@pecom.ru",
+      },
     },
   ],
 };

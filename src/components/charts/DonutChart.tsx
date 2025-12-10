@@ -14,10 +14,14 @@ interface DonutChartProps {
   viewMode: 'amount' | 'count';
 }
 
+interface ApexChartInstance {
+  updateOptions: (options: ApexOptions, redraw?: boolean, animate?: boolean) => void;
+}
+
 export default function DonutChart({ data, viewMode }: DonutChartProps) {
   const [isDark, setIsDark] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const chartInstanceRef = useRef<any>(null);
+  const chartInstanceRef = useRef<ApexChartInstance | null>(null);
   const [isChartReady, setIsChartReady] = useState(false);
 
   useEffect(() => {
