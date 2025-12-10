@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import FinanceTable from "@/components/tables/FinanceTable";
+import StatusStatsTable from "@/components/tables/StatusStatsTable";
 import { Download, RotateCw } from "lucide-react";
 import { financeService } from "@/services/finance.service";
 
@@ -94,10 +95,13 @@ export default function FinancePageClient() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Финансы" />
+      <PageBreadcrumb pageTitle="Финансовые притензии" />
       <div className="space-y-6">
+        <ComponentCard title="Статистика по статусам">
+          <StatusStatsTable />
+        </ComponentCard>
         <ComponentCard 
-          title="Финансовые данные"
+          title="Данные финансовых притензий"
           action={
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-end gap-0.5 text-sm text-gray-600 dark:text-gray-400">

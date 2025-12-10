@@ -24,6 +24,12 @@ export interface IFinanceMeta {
   errors: number;
 }
 
+export interface IStatusStat {
+  status: string;
+  amount: number;
+  count: number;
+}
+
 class FinanceService {
   private BASE_URL = '/finance';
 
@@ -109,6 +115,40 @@ class FinanceService {
       return response.data;
     } catch (error: unknown) {
       console.error('Failed to fetch last import meta:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получает статистику по статусам
+   * @param sortBy - поле для сортировки ('amount' | 'count')
+   * @param sortOrder - порядок сортировки ('asc' | 'desc')
+   */
+  async getStatusStats(sortBy?: 'amount' | 'count', sortOrder?: 'asc' | 'desc'): Promise<IStatusStat[]> {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (sortBy) {
+        queryParams.append('sortBy', sortBy);
+      }
+      if (sortOrder) {
+        queryParams.append('sortOrder', sortOrder);
+      }
+
+      const url = queryParams.toString() 
+        ? `${this.BASE_URL}/stats/status?${queryParams.toString()}`
+        : `${this.BASE_URL}/stats/status`;
+
+      const response = await axiosWithAuth.get<IStatusStat[]>(url);
+      return response.data;
+    } catch (error: unknown) {
+      const isNetworkError = error && typeof error === 'object' && 'code' in error && 
+        (error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED');
+      
+      if (!isNetworkError) {
+        console.error('Failed to fetch status stats:', error);
+      }
+      
       throw error;
     }
   }
