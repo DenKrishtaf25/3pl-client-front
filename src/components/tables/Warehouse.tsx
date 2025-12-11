@@ -35,11 +35,10 @@ const warehouses: Warehouse[] = [
     typeFloor: "бетонный с антипылевым покрытием",
     coords: [56.112993, 37.183091],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/moscow-litvinovo-1.jpg",
+      "/images/warehouse/moscow-litvinovo-2.jpg",
+      "/images/warehouse/moscow-litvinovo-3.jpg",
+      "/images/warehouse/moscow-litvinovo-4.jpg"
     ],
   },
   {
@@ -53,11 +52,12 @@ const warehouses: Warehouse[] = [
     typeFloor: "бетонный с антипылевым покрытием",
     coords: [55.649896, 37.926476],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/moscow-tomilino-1.jpg",
+      "/images/warehouse/moscow-tomilino-2.jpg",
+      "/images/warehouse/moscow-tomilino-3.jpg",
+      "/images/warehouse/moscow-tomilino-4.jpg",
+      "/images/warehouse/moscow-tomilino-5.jpg",
+      "/images/warehouse/moscow-tomilino-6.jpg"
     ],
   },
   {
@@ -72,11 +72,12 @@ const warehouses: Warehouse[] = [
     ramp: "есть",
     coords: [55.139162, 37.543930],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/moscow-chekhov-1.jpg",
+      "/images/warehouse/moscow-chekhov-2.jpg",
+      "/images/warehouse/moscow-chekhov-3.jpg",
+      "/images/warehouse/moscow-chekhov-4.jpg",
+      "/images/warehouse/moscow-chekhov-5.jpg",
+      "/images/warehouse/moscow-chekhov-6.jpg"
     ],
   },
   {
@@ -90,11 +91,12 @@ const warehouses: Warehouse[] = [
     typeFloor: "бетонный с антипылевым покрытием",
     coords: [56.046262, 37.547188],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/moscow-sholokhovo-1.jpg",
+      "/images/warehouse/moscow-sholokhovo-2.jpg",
+      "/images/warehouse/moscow-sholokhovo-3.jpg",
+      "/images/warehouse/moscow-sholokhovo-4.jpg",
+      "/images/warehouse/moscow-sholokhovo-5.jpg",
+      "/images/warehouse/moscow-sholokhovo-6.jpg"
     ],
   },
   {
@@ -108,11 +110,10 @@ const warehouses: Warehouse[] = [
     typeFloor: "топинг",
     coords: [43.281853, 76.919539],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/almaty-1.jpg",
+      "/images/warehouse/almaty-2.jpg",
+      "/images/warehouse/almaty-3.jpg",
+      "/images/warehouse/almaty-4.jpg"
     ],
   },
   {
@@ -127,11 +128,12 @@ const warehouses: Warehouse[] = [
     ramp: "есть",
     coords: [55.633794, 49.255765],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/kazan-1.jpg",
+      "/images/warehouse/kazan-2.jpg",
+      "/images/warehouse/kazan-3.jpg",
+      "/images/warehouse/kazan-4.jpg",
+      "/images/warehouse/kazan-5.jpg",
+      "/images/warehouse/kazan-6.jpg"
     ],
   },
   {
@@ -145,11 +147,12 @@ const warehouses: Warehouse[] = [
     typeFloor: "бетонный с антипылевым покрытием",
     coords: [45.083919, 39.018224],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/krasnodar-1.jpg",
+      "/images/warehouse/krasnodar-2.jpg",
+      "/images/warehouse/krasnodar-3.jpg",
+      "/images/warehouse/krasnodar-4.jpg",
+      "/images/warehouse/krasnodar-5.jpg",
+      "/images/warehouse/krasnodar-6.jpg"
     ],
   },
   {
@@ -163,11 +166,10 @@ const warehouses: Warehouse[] = [
     typeFloor: "бетонный с антипылевым покрытием",
     coords: [56.055361, 92.845817],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/krasnoyarsk-1.jpg",
+      "/images/warehouse/krasnoyarsk-2.jpg",
+      "/images/warehouse/krasnoyarsk-3.jpg",
+      "/images/warehouse/krasnoyarsk-4.jpg"
     ],
   },
   {
@@ -181,11 +183,12 @@ const warehouses: Warehouse[] = [
     typeFloor: "бетонный с антипылевым покрытием",
     coords: [56.290206, 43.597410],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/nizhny-novgorod-1.jpg",
+      "/images/warehouse/nizhny-novgorod-2.jpg",
+      "/images/warehouse/nizhny-novgorod-3.jpg",
+      "/images/warehouse/nizhny-novgorod-4.jpg",
+      "/images/warehouse/nizhny-novgorod-5.jpg",
+      "/images/warehouse/nizhny-novgorod-6.jpg"
     ],
   },
   {
@@ -200,11 +203,12 @@ const warehouses: Warehouse[] = [
     ramp: "есть",
     coords: [53.186156, 50.255349],
     images: [
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg",
-      "/images/warehouse/gallery-1.jpg"
+      "/images/warehouse/samara-1.jpg",
+      "/images/warehouse/samara-2.jpg",
+      "/images/warehouse/samara-3.jpg",
+      "/images/warehouse/samara-4.jpg",
+      "/images/warehouse/samara-5.jpg",
+      "/images/warehouse/samara-6.jpg"
     ],
   },
 ];

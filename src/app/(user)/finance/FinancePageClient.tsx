@@ -95,13 +95,13 @@ export default function FinancePageClient() {
 
   return (
     <div>
-      <PageBreadcrumb pageTitle="Финансовые притензии" />
+      <PageBreadcrumb pageTitle="Финансовые претензии" />
       <div className="space-y-6">
         <ComponentCard title="Статистика по статусам">
           <StatusStatsTable />
         </ComponentCard>
         <ComponentCard 
-          title="Данные финансовых притензий"
+          title="Данные финансовых претензий"
           action={
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-end gap-0.5 text-sm text-gray-600 dark:text-gray-400">

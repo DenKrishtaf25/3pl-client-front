@@ -310,17 +310,6 @@ const contactsData: ContactItem = {
           },
         },
         {
-          id: "branch-multiple",
-          name: "Множественные филиалы",
-          type: "subdepartment",
-          leader: {
-            id: "chabiev-gu",
-            name: "Чабиев Георгий Ушангович",
-            position: "Сменный директор филиала/Директор филиала, Алматы, Иркутск, Магадан, Новосибирск, Пермь, Пятигорск, Санкт-Петербург, Ставрополь, Уссурийск, Челябинск, Бутово",
-            email: "chabiev.gu@pecom.ru",
-          },
-        },
-        {
           id: "branch-chekhov-2",
           name: "Филиал Чехов-2",
           type: "subdepartment",
@@ -346,12 +335,12 @@ const contactsData: ContactItem = {
     },
     {
       id: "service-director",
-      name: "Директор службы",
+      name: "Директор службы развития",
       type: "department",
       leader: {
         id: "belykh-vm",
         name: "Белых Вадим Михайлович",
-        position: "Директор службы",
+        position: "Директор службы развития",
         email: "belykh.vm@pecom.ru",
       },
       subDepartmentsCount: 2,
