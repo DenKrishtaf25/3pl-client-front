@@ -143,13 +143,17 @@ export interface IFinanceQueryParams {
     search?: string
     page?: number
     limit?: number
-    sortBy?: 'date' | 'amount'
+    sortBy?: 'date' | 'amount' | 'completionDate' | 'closingDate'
     sortOrder?: 'asc' | 'desc'
     branch?: string // Фильтр по филиалу
     status?: string // Фильтр по статусу
     dateFrom?: string // Дата с (ISO format: YYYY-MM-DD)
     dateTo?: string // Дата до (ISO format: YYYY-MM-DD)
     amountFrom?: number // Минимальная сумма
+    completionDateFrom?: string // Дата завершения с (ISO format: YYYY-MM-DD)
+    completionDateTo?: string // Дата завершения до (ISO format: YYYY-MM-DD)
+    closingDateFrom?: string // Дата закрытия с (ISO format: YYYY-MM-DD)
+    closingDateTo?: string // Дата закрытия до (ISO format: YYYY-MM-DD)
 }
 
 export interface IComplaintQueryParams {

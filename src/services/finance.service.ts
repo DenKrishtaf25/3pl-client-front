@@ -9,6 +9,8 @@ export interface IFinance {
   amount: number;
   orderNumber?: string;
   description?: string;
+  completionDate?: string;
+  closingDate?: string;
   clientTIN?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -70,6 +72,18 @@ class FinanceService {
       }
       if (params?.amountFrom) {
         queryParams.append('amountFrom', params.amountFrom.toString());
+      }
+      if (params?.completionDateFrom) {
+        queryParams.append('completionDateFrom', params.completionDateFrom);
+      }
+      if (params?.completionDateTo) {
+        queryParams.append('completionDateTo', params.completionDateTo);
+      }
+      if (params?.closingDateFrom) {
+        queryParams.append('closingDateFrom', params.closingDateFrom);
+      }
+      if (params?.closingDateTo) {
+        queryParams.append('closingDateTo', params.closingDateTo);
       }
 
       const url = queryParams.toString() 

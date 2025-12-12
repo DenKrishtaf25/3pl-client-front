@@ -20,7 +20,7 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
 
-type FilterType = 'branch' | 'status' | 'date' | 'amountFrom';
+type FilterType = 'branch' | 'status' | 'date' | 'amountFrom' | 'completionDate' | 'closingDate';
 
 interface FinanceTableProps {
   onExportReady?: (exportFn: () => void) => void;
@@ -35,7 +35,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
   // Пагинация и сортировка
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const [sortBy, setSortBy] = useState<'date' | 'amount'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'completionDate' | 'closingDate'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   
   // Фильтры по колонкам
@@ -46,6 +46,10 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
   // Фильтры по датам (применённые значения)
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [completionDateFrom, setCompletionDateFrom] = useState<Date | null>(null);
+  const [completionDateTo, setCompletionDateTo] = useState<Date | null>(null);
+  const [closingDateFrom, setClosingDateFrom] = useState<Date | null>(null);
+  const [closingDateTo, setClosingDateTo] = useState<Date | null>(null);
   
   // Input состояния для фильтров (текстовые)
   const [branchInput, setBranchInput] = useState('');
@@ -55,6 +59,10 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
   // Input состояния для фильтров по датам (временные, до применения)
   const [dateFromInput, setDateFromInput] = useState<Date | null>(null);
   const [dateToInput, setDateToInput] = useState<Date | null>(null);
+  const [completionDateFromInput, setCompletionDateFromInput] = useState<Date | null>(null);
+  const [completionDateToInput, setCompletionDateToInput] = useState<Date | null>(null);
+  const [closingDateFromInput, setClosingDateFromInput] = useState<Date | null>(null);
+  const [closingDateToInput, setClosingDateToInput] = useState<Date | null>(null);
   
   // UI состояния для фильтров
   const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
@@ -95,6 +103,18 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
       if (dateTo) {
         requestParams.dateTo = formatDateToISO(dateTo);
       }
+      if (completionDateFrom) {
+        requestParams.completionDateFrom = formatDateToISO(completionDateFrom);
+      }
+      if (completionDateTo) {
+        requestParams.completionDateTo = formatDateToISO(completionDateTo);
+      }
+      if (closingDateFrom) {
+        requestParams.closingDateFrom = formatDateToISO(closingDateFrom);
+      }
+      if (closingDateTo) {
+        requestParams.closingDateTo = formatDateToISO(closingDateTo);
+      }
       
       // Загружаем данные
       const response = await financeService.getPaginated(requestParams);
@@ -131,7 +151,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     } finally {
       setLoading(false);
     }
-  }, [page, limit, sortBy, sortOrder, branch, status, amountFrom, dateFrom, dateTo]);
+  }, [page, limit, sortBy, sortOrder, branch, status, amountFrom, dateFrom, dateTo, completionDateFrom, completionDateTo, closingDateFrom, closingDateTo]);
 
   useEffect(() => {
     loadFinance();
@@ -215,6 +235,26 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         setPage(1);
         setActiveFilterInput(null);
       }
+    } else if (filterType === 'completionDate') {
+      // Применение фильтров по дате завершения
+      if (completionDateFromInput || completionDateToInput) {
+        setCompletionDateFrom(completionDateFromInput);
+        setCompletionDateTo(completionDateToInput);
+        setCompletionDateFromInput(null);
+        setCompletionDateToInput(null);
+        setPage(1);
+        setActiveFilterInput(null);
+      }
+    } else if (filterType === 'closingDate') {
+      // Применение фильтров по дате закрытия
+      if (closingDateFromInput || closingDateToInput) {
+        setClosingDateFrom(closingDateFromInput);
+        setClosingDateTo(closingDateToInput);
+        setClosingDateFromInput(null);
+        setClosingDateToInput(null);
+        setPage(1);
+        setActiveFilterInput(null);
+      }
     } else {
       // Применение текстовых фильтров
       const value = getFilterInputValue(filterType).trim();
@@ -228,7 +268,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
   };
 
   const handleFilterInputBlur = (filterType: FilterType) => {
-    if (filterType !== 'date') {
+    if (filterType !== 'date' && filterType !== 'completionDate' && filterType !== 'closingDate') {
       const value = getFilterInputValue(filterType).trim();
       
       if (!value) {
@@ -244,6 +284,12 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
       // Для дат загружаем текущие применённые значения в input
       setDateFromInput(dateFrom);
       setDateToInput(dateTo);
+    } else if (filterType === 'completionDate') {
+      setCompletionDateFromInput(completionDateFrom);
+      setCompletionDateToInput(completionDateTo);
+    } else if (filterType === 'closingDate') {
+      setClosingDateFromInput(closingDateFrom);
+      setClosingDateToInput(closingDateTo);
     } else {
       // Для текстовых фильтров
       const currentValue = getFilterValue(filterType);
@@ -265,6 +311,12 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     if (filterType === 'date') {
       setDateFrom(null);
       setDateTo(null);
+    } else if (filterType === 'completionDate') {
+      setCompletionDateFrom(null);
+      setCompletionDateTo(null);
+    } else if (filterType === 'closingDate') {
+      setClosingDateFrom(null);
+      setClosingDateTo(null);
     } else {
       setFilterValue(filterType, '');
     }
@@ -282,6 +334,14 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     setDateTo(null);
     setDateFromInput(null);
     setDateToInput(null);
+    setCompletionDateFrom(null);
+    setCompletionDateTo(null);
+    setCompletionDateFromInput(null);
+    setCompletionDateToInput(null);
+    setClosingDateFrom(null);
+    setClosingDateTo(null);
+    setClosingDateFromInput(null);
+    setClosingDateToInput(null);
     setActiveFilterInput(null);
     setPage(1);
   };
@@ -291,7 +351,9 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     branch, 
     status, 
     amountFrom,
-    dateFrom || dateTo ? 'date' : null
+    dateFrom || dateTo ? 'date' : null,
+    completionDateFrom || completionDateTo ? 'completionDate' : null,
+    closingDateFrom || closingDateTo ? 'closingDate' : null
   ].filter(Boolean).length;
 
   // Закрытие выпадающего списка при клике вне
@@ -360,6 +422,8 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
       'Сумма': item.amount,
       '№ заказа': item.orderNumber || '',
       'Описание': item.description || '',
+      'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '',
+      'Дата закрытия': item.closingDate ? formatDate(item.closingDate) : '',
     }));
 
     exportToExcel(exportData, `Финансы_${new Date().toISOString().split('T')[0]}`);
@@ -372,7 +436,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     }
   }, [onExportReady, handleExport]);
 
-  const handleSort = (field: 'date' | 'amount') => {
+  const handleSort = (field: 'date' | 'amount' | 'completionDate' | 'closingDate') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -392,6 +456,10 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
         return 'Дата';
       case 'amountFrom':
         return 'Сумма от';
+      case 'completionDate':
+        return 'Дата завершения';
+      case 'closingDate':
+        return 'Дата закрытия';
     }
   };
 
@@ -399,11 +467,17 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     if (filterType === 'date') {
       return !!(dateFrom || dateTo);
     }
+    if (filterType === 'completionDate') {
+      return !!(completionDateFrom || completionDateTo);
+    }
+    if (filterType === 'closingDate') {
+      return !!(closingDateFrom || closingDateTo);
+    }
     return !!getFilterValue(filterType);
   };
 
   const isDateFilter = (filterType: FilterType): boolean => {
-    return filterType === 'date';
+    return filterType === 'date' || filterType === 'completionDate' || filterType === 'closingDate';
   };
 
   return (
@@ -487,6 +561,22 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
                       Сумма от
+                    </DropdownItem>
+                  )}
+                  {!hasFilter('completionDate') && activeFilterInput !== 'completionDate' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('completionDate')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Дата завершения
+                    </DropdownItem>
+                  )}
+                  {!hasFilter('closingDate') && activeFilterInput !== 'closingDate' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('closingDate')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Дата закрытия
                     </DropdownItem>
                   )}
                 </Dropdown>
@@ -576,11 +666,31 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                 <div className="relative">
                   <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
                   <DatePicker
-                    selected={dateFromInput || undefined}
-                    onChange={(date) => setDateFromInput(date)}
+                    selected={
+                      activeFilterInput === 'date' ? dateFromInput || undefined :
+                      activeFilterInput === 'completionDate' ? completionDateFromInput || undefined :
+                      closingDateFromInput || undefined
+                    }
+                    onChange={(date) => {
+                      if (activeFilterInput === 'date') {
+                        setDateFromInput(date);
+                      } else if (activeFilterInput === 'completionDate') {
+                        setCompletionDateFromInput(date);
+                      } else {
+                        setClosingDateFromInput(date);
+                      }
+                    }}
                     selectsStart
-                    startDate={dateFromInput || undefined}
-                    endDate={dateToInput || undefined}
+                    startDate={
+                      activeFilterInput === 'date' ? dateFromInput || undefined :
+                      activeFilterInput === 'completionDate' ? completionDateFromInput || undefined :
+                      closingDateFromInput || undefined
+                    }
+                    endDate={
+                      activeFilterInput === 'date' ? dateToInput || undefined :
+                      activeFilterInput === 'completionDate' ? completionDateToInput || undefined :
+                      closingDateToInput || undefined
+                    }
                     placeholderText="С"
                     dateFormat="dd.MM.yyyy"
                     locale={ru}
@@ -591,11 +701,31 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                 <div className="relative">
                   <CalendarDays className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-[1]" />
                   <DatePicker
-                    selected={dateToInput || undefined}
-                    onChange={(date) => setDateToInput(date)}
+                    selected={
+                      activeFilterInput === 'date' ? dateToInput || undefined :
+                      activeFilterInput === 'completionDate' ? completionDateToInput || undefined :
+                      closingDateToInput || undefined
+                    }
+                    onChange={(date) => {
+                      if (activeFilterInput === 'date') {
+                        setDateToInput(date);
+                      } else if (activeFilterInput === 'completionDate') {
+                        setCompletionDateToInput(date);
+                      } else {
+                        setClosingDateToInput(date);
+                      }
+                    }}
                     selectsEnd
-                    startDate={dateFromInput || undefined}
-                    endDate={dateToInput || undefined}
+                    startDate={
+                      activeFilterInput === 'date' ? dateFromInput || undefined :
+                      activeFilterInput === 'completionDate' ? completionDateFromInput || undefined :
+                      closingDateFromInput || undefined
+                    }
+                    endDate={
+                      activeFilterInput === 'date' ? dateToInput || undefined :
+                      activeFilterInput === 'completionDate' ? completionDateToInput || undefined :
+                      closingDateToInput || undefined
+                    }
                     placeholderText="До"
                     dateFormat="dd.MM.yyyy"
                     locale={ru}
@@ -606,7 +736,11 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   type="button"
                   onClick={() => handleApplyFilter(activeFilterInput)}
                   className="flex items-center justify-center w-9 h-9 rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!dateFromInput && !dateToInput}
+                  disabled={
+                    activeFilterInput === 'date' ? (!dateFromInput && !dateToInput) :
+                    activeFilterInput === 'completionDate' ? (!completionDateFromInput && !completionDateToInput) :
+                    (!closingDateFromInput && !closingDateToInput)
+                  }
                   aria-label="Применить фильтр"
                 >
                   <CheckLineIcon />
@@ -734,12 +868,62 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               </button>
             </div>
           )}
+          {hasFilter('completionDate') && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('completionDate')}
+            >
+              <span>
+                Дата завершения: {completionDateFrom && formatDateForChip(completionDateFrom)}
+                {completionDateFrom && completionDateTo && ' — '}
+                {completionDateTo && formatDateForChip(completionDateTo)}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('completionDate');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+          {hasFilter('closingDate') && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('closingDate')}
+            >
+              <span>
+                Дата закрытия: {closingDateFrom && formatDateForChip(closingDateFrom)}
+                {closingDateFrom && closingDateTo && ' — '}
+                {closingDateTo && formatDateForChip(closingDateTo)}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('closingDate');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[800px]">
+          <div className="min-w-[1000px]">
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
@@ -801,13 +985,47 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   >
                     Описание
                   </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSort('completionDate')}
+                      className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      Дата завершения
+                      {sortBy === 'completionDate' && (
+                        <span className="text-brand-500">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </button>
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleSort('closingDate')}
+                      className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                    >
+                      Дата закрытия
+                      {sortBy === 'closingDate' && (
+                        <span className="text-brand-500">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </button>
+                  </TableCell>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center">
+                    <TableCell colSpan={8} className="px-4 py-8 text-center">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                         <span className="ml-2 text-gray-600 dark:text-gray-400">Загрузка данных...</span>
@@ -816,15 +1034,15 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center">
+                    <TableCell colSpan={8} className="px-4 py-8 text-center">
                       <div className="text-red-600 dark:text-red-400">{error}</div>
                     </TableCell>
                   </TableRow>
                 ) : !finance || finance.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="px-4 py-8 text-center">
+                    <TableCell colSpan={8} className="px-4 py-8 text-center">
                       <div className="text-gray-500 dark:text-gray-400">
-                        {(branch || status || amountFrom || dateFrom || dateTo)
+                        {(branch || status || amountFrom || dateFrom || dateTo || completionDateFrom || completionDateTo || closingDateFrom || closingDateTo)
                           ? 'Ничего не найдено по выбранным фильтрам'
                           : 'Нет данных'}
                       </div>
@@ -857,6 +1075,14 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 max-w-[200px] truncate">
                         {item.description || '-'}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {item.completionDate ? formatDate(item.completionDate) : '-'}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {item.closingDate ? formatDate(item.closingDate) : '-'}
                       </TableCell>
                     </TableRow>
                   ))
