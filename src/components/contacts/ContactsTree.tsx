@@ -392,17 +392,6 @@ const contactsData: ContactItem = {
             email: "stefanenkov.aa@pecom.ru",
           },
         },
-        {
-          id: "wms-support",
-          name: "Группа поддержки WMS",
-          type: "subdepartment",
-          leader: {
-            id: "ermakova-tv",
-            name: "Ермакова Таисия Валерьевна",
-            position: "Руководитель группы, Группа поддержки WMS",
-            email: "ermakova.tv@pecom.ru",
-          },
-        },
       ],
     },
     {

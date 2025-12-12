@@ -386,6 +386,8 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
       'Тип претензии': item.complaintType,
       'Статус': item.status,
       'Подтверждение': item.confirmation ? 'Да' : 'Нет',
+      'Срок выполнения': item.deadline ? formatDate(item.deadline) : '-',
+      'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '-',
       'ИНН клиента': item.clientTIN,
     }));
 
@@ -940,13 +942,25 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
                   >
                     Подтверждение
                   </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                  >
+                    Срок выполнения
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                  >
+                    Дата завершения
+                  </TableCell>
                 </TableRow>
               </TableHeader>
 
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="px-4 py-8 text-center">
+                    <TableCell colSpan={9} className="px-4 py-8 text-center">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                         <span className="ml-2 text-gray-600 dark:text-gray-400">Загрузка данных...</span>
@@ -955,13 +969,13 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="px-4 py-8 text-center">
+                    <TableCell colSpan={9} className="px-4 py-8 text-center">
                       <div className="text-red-600 dark:text-red-400">{error}</div>
                     </TableCell>
                   </TableRow>
                 ) : !complaints || complaints.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="px-4 py-8 text-center">
+                    <TableCell colSpan={9} className="px-4 py-8 text-center">
                       <div className="text-gray-500 dark:text-gray-400">
                         {(branch || status || complaint_type || confirmation !== null || dateFrom || dateTo)
                           ? 'Ничего не найдено по выбранным фильтрам'
@@ -1006,6 +1020,14 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
                         }`}>
                           {item.confirmation ? 'Да' : 'Нет'}
                         </span>
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {item.deadline ? formatDateTime(item.deadline) : '-'}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {item.completionDate ? formatDateTime(item.completionDate) : '-'}
                       </TableCell>
                     </TableRow>
                   ))

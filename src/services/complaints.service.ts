@@ -10,6 +10,8 @@ export interface IComplaint {
   complaintType: string;
   status: string;
   confirmation: boolean;
+  deadline?: string | null;
+  completionDate?: string | null;
   clientTIN: string;
   createdAt?: string;
   updatedAt?: string;
