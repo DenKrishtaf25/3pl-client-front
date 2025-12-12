@@ -610,7 +610,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       'Дата выгрузки заказа': formatDate(order.exportDate),
       'Статус': order.status,
       'Контрагент': order.counterparty,
-      'Заявленная дата отгрузки': formatDateTime(order.shipmentDate),
+      'Плановая дата отгрузки': formatDateTime(order.shipmentDate),
       'Дата приемки': formatDateTime(order.acceptanceDate),
       'Упаковок план': order.packagesPlanned,
       'Упаковок факт': order.packagesActual,
@@ -657,7 +657,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       case 'exportDate':
         return 'Дата выгрузки заказа';
       case 'shipmentDate':
-        return 'Заявленная дата отгрузки';
+        return 'Плановая дата отгрузки';
     }
   };
 
@@ -798,7 +798,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('shipmentDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Заявленная дата отгрузки
+                      Плановая дата отгрузки
                     </DropdownItem>
                   )}
                 </Dropdown>
@@ -1262,7 +1262,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('shipmentDate')}
             >
               <span>
-                Заявленная дата отгрузки: {shipmentDateFrom && formatDateForChip(shipmentDateFrom, true)}
+                Плановая дата отгрузки: {shipmentDateFrom && formatDateForChip(shipmentDateFrom, true)}
                 {shipmentDateFrom && shipmentDateTo && ' — '}
                 {shipmentDateTo && formatDateForChip(shipmentDateTo, true)}
               </span>
@@ -1351,7 +1351,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('shipmentDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Заявленная дата отгрузки
+                    Плановая дата отгрузки
                     {sortBy === 'shipmentDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
