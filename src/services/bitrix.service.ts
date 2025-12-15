@@ -13,9 +13,9 @@ class BitrixService {
         fields: {
           TITLE: `Заявка на инвентаризацию - ${data.companyName}`,
           DESCRIPTION: this.formatDescription(data),
-          RESPONSIBLE_ID: 668,
+          RESPONSIBLE_ID: 11,
           CREATED_BY: 668,
-          GROUP_ID: 0
+          GROUP_ID: 115 // Группа для задач инвентаризации
         }
       };
 
