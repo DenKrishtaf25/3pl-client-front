@@ -1,25 +1,31 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import LineChartOne1, { IChartDataPoint } from "@/components/charts/line/LineChartOne1";
+import LineChartOrders, { IOrdersChartDataPoint } from "@/components/charts/line/LineChartOrders";
 import ComponentCard from "@/components/common/ComponentCard";
 import { analyticsService, IAvailableClient } from "@/services/analytics.service";
+import { analyticsOrdersService } from "@/services/analytics-orders.service";
 import { Dropdown } from "@/components/ui/dropdown/Dropdown";
 import { DropdownItem } from "@/components/ui/dropdown/DropdownItem";
 import { CheckLineIcon, ChevronDownIcon } from "@/icons";
 
 export default function AnalyticsPageClient() {
   const [chartData, setChartData] = useState<IChartDataPoint[]>([]);
+  const [ordersChartData, setOrdersChartData] = useState<IOrdersChartDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
   const [availableClients, setAvailableClients] = useState<IAvailableClient[]>([]);
   const [selectedClientTINs, setSelectedClientTINs] = useState<string[]>([]);
   const [lastImportAt, setLastImportAt] = useState<string | null>(null);
+  const [ordersLastImportAt, setOrdersLastImportAt] = useState<string | null>(null);
   
   // UI состояния
   const [isClientsDropdownOpen, setIsClientsDropdownOpen] = useState(false);
   const [clientSearchQuery, setClientSearchQuery] = useState("");
 
-  // Загрузка данных
+  // Загрузка данных для ТС
   const loadChartData = useCallback(async (clientTINs?: string[]) => {
     try {
       setLoading(true);
@@ -67,9 +73,55 @@ export default function AnalyticsPageClient() {
     }
   }, []);
 
+  // Загрузка данных для заказов
+  const loadOrdersChartData = useCallback(async (clientTINs?: string[]) => {
+    try {
+      setOrdersLoading(true);
+      setOrdersError(null);
+
+      const params: {
+        clientTIN?: string;
+      } = {};
+
+      if (clientTINs && clientTINs.length > 0) {
+        params.clientTIN = clientTINs.join(',');
+      }
+
+      const response = await analyticsOrdersService.getChartData(params);
+      
+      // Преобразуем данные из формата API в формат компонента графика
+      const transformedData: IOrdersChartDataPoint[] = response.data.map(item => ({
+        date: item.date,
+        quantityByPlannedDate: item.quantityByPlannedDate,
+        quantityByActualDate: item.quantityByActualDate,
+      }));
+      
+      setOrdersChartData(transformedData);
+      setOrdersLastImportAt(response.lastImportAt);
+    } catch (err: unknown) {
+      const isNetworkError = err && typeof err === 'object' && 'code' in err && 
+        (err.code === 'ERR_NETWORK' || err.code === 'ERR_CONNECTION_REFUSED');
+      
+      if (!isNetworkError) {
+        console.error('Failed to load orders chart data:', err);
+      }
+      
+      if (isNetworkError) {
+        setOrdersError('Сервер недоступен. Убедитесь, что бэкенд запущен.');
+      } else {
+        setOrdersError('Ошибка при загрузке данных заказов');
+      }
+      
+      setOrdersChartData([]);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
   // Первоначальная загрузка
   useEffect(() => {
     loadChartData();
+    loadOrdersChartData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -95,8 +147,9 @@ export default function AnalyticsPageClient() {
         newSelected = [...prev, clientTIN];
       }
       
-      // Загружаем данные с новыми клиентами
+      // Загружаем данные с новыми клиентами для обоих графиков
       loadChartData(newSelected.length > 0 ? newSelected : undefined);
+      loadOrdersChartData(newSelected.length > 0 ? newSelected : undefined);
       
       return newSelected;
     });
@@ -117,8 +170,9 @@ export default function AnalyticsPageClient() {
     
     setSelectedClientTINs(newSelected);
     
-    // Загружаем данные с новыми клиентами
+    // Загружаем данные с новыми клиентами для обоих графиков
     loadChartData(newSelected.length > 0 ? newSelected : undefined);
+    loadOrdersChartData(newSelected.length > 0 ? newSelected : undefined);
   };
 
   // Фильтрация клиентов по поисковому запросу
@@ -326,18 +380,30 @@ export default function AnalyticsPageClient() {
           </div>
 
           {/* Дата последнего обновления */}
-          {lastImportAt && (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Последнее обновление: {formatLastImportDate(lastImportAt)}
-            </div>
-          )}
+          <div className="flex flex-col gap-1 text-sm text-gray-500 dark:text-gray-400">
+            {lastImportAt && (
+              <div>
+                ТС - Последнее обновление: {formatLastImportDate(lastImportAt)}
+              </div>
+            )}
+            {ordersLastImportAt && (
+              <div>
+                Заказы - Последнее обновление: {formatLastImportDate(ordersLastImportAt)}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Ошибка */}
+      {/* Ошибки */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-          <p className="text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-red-600 dark:text-red-400">ТС: {error}</p>
+        </div>
+      )}
+      {ordersError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+          <p className="text-red-600 dark:text-red-400">Заказы: {ordersError}</p>
         </div>
       )}
 
@@ -354,6 +420,21 @@ export default function AnalyticsPageClient() {
           </div>
         ) : (
           <LineChartOne1 data={chartData} onZoom={handleZoom} />
+        )}
+      </ComponentCard>
+
+      <ComponentCard title="Количество заказов">
+        {ordersLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="ml-2 text-gray-600 dark:text-gray-400">Загрузка...</span>
+          </div>
+        ) : ordersChartData.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            Нет данных для отображения
+          </div>
+        ) : (
+          <LineChartOrders data={ordersChartData} onZoom={handleZoom} />
         )}
       </ComponentCard>
     </div>
