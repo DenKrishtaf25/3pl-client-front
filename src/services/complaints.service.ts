@@ -27,6 +27,13 @@ export interface IComplaintMeta {
   errors: number;
 }
 
+export interface IComplaintStatusStat {
+  status: string;
+  count: number;
+  confirmedCount: number;
+  unconfirmedCount: number;
+}
+
 class ComplaintsService {
   private BASE_URL = '/complaints';
 
@@ -115,6 +122,28 @@ class ComplaintsService {
       return response.data;
     } catch (error: unknown) {
       console.error('Failed to fetch last import meta:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Получает статистику по статусам
+   */
+  async getStatusStats(): Promise<IComplaintStatusStat[]> {
+    try {
+      const response = await axiosWithAuth.get<IComplaintStatusStat[]>(`${this.BASE_URL}/stats/status`);
+      return response.data;
+    } catch (error: unknown) {
+      // Проверяем различные форматы ошибок Axios
+      const isNetworkError = error && typeof error === 'object' && 
+        (('code' in error && (error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED')) ||
+         ('message' in error && typeof error.message === 'string' && 
+          (error.message.includes('Network Error') || error.message.includes('ERR_CONNECTION_REFUSED'))));
+      
+      if (!isNetworkError) {
+        console.error('Failed to fetch status stats:', error);
+      }
+      
       throw error;
     }
   }
