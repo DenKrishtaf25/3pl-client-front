@@ -15,6 +15,16 @@ const nextConfig: NextConfig = {
       fullUrl: false,
     },
   },
+  // Оптимизация для production
+  compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
+  // Ограничение размера тела запроса
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
   /* config options here */
   webpack(config, { isServer }) {
     config.module.rules.push({
