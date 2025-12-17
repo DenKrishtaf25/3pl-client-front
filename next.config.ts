@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Подавляем логирование NEXT_REDIRECT в development (это не ошибки, а нормальное поведение)
+  logging: {
+    fetches: {
+      fullUrl: false,
+    },
+  },
   /* config options here */
   webpack(config, { isServer }) {
     config.module.rules.push({
