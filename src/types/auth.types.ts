@@ -93,6 +93,7 @@ export interface IStockQueryParams {
     warehouse?: string // Фильтр по складу
     nomenclature?: string // Фильтр по номенклатуре
     article?: string // Фильтр по артикулу
+    counterparty?: string // Фильтр по контрагенту
 }
 
 export interface IRegistryQueryParams {

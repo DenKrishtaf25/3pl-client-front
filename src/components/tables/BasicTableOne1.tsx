@@ -37,13 +37,15 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
   const [warehouse, setWarehouse] = useState('');
   const [nomenclature, setNomenclature] = useState('');
   const [article, setArticle] = useState('');
+  const [counterparty, setCounterparty] = useState('');
   const [warehouseInput, setWarehouseInput] = useState('');
   const [nomenclatureInput, setNomenclatureInput] = useState('');
   const [articleInput, setArticleInput] = useState('');
+  const [counterpartyInput, setCounterpartyInput] = useState('');
   
   // UI состояния для фильтров
   const [isFiltersDropdownOpen, setIsFiltersDropdownOpen] = useState(false);
-  const [activeFilterInput, setActiveFilterInput] = useState<'warehouse' | 'nomenclature' | 'article' | null>(null);
+  const [activeFilterInput, setActiveFilterInput] = useState<'warehouse' | 'nomenclature' | 'article' | 'counterparty' | null>(null);
   const filtersDropdownRef = useRef<HTMLDivElement>(null);
   const [isLimitDropdownOpen, setIsLimitDropdownOpen] = useState(false);
   const limitDropdownRef = useRef<HTMLDivElement>(null);
@@ -75,6 +77,7 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
         warehouse: warehouse || undefined,
         nomenclature: nomenclature || undefined,
         article: article || undefined,
+        counterparty: counterparty || undefined,
       };
       
       const response = await stockService.getPaginated(queryParams);
@@ -114,34 +117,38 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     } finally {
       setLoading(false);
     }
-  }, [selectedClients, page, limit, sortBy, sortOrder, warehouse, nomenclature, article]);
+  }, [selectedClients, page, limit, sortBy, sortOrder, warehouse, nomenclature, article, counterparty]);
 
   useEffect(() => {
     loadStocks();
   }, [loadStocks]);
 
   // Обработчики для фильтров
-  const handleFilterSelect = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+  const handleFilterSelect = (filterType: 'warehouse' | 'nomenclature' | 'article' | 'counterparty') => {
     setActiveFilterInput(filterType);
     setIsFiltersDropdownOpen(false);
   };
 
-  const handleFilterInputChange = (filterType: 'warehouse' | 'nomenclature' | 'article', value: string) => {
+  const handleFilterInputChange = (filterType: 'warehouse' | 'nomenclature' | 'article' | 'counterparty', value: string) => {
     if (filterType === 'warehouse') {
       setWarehouseInput(value);
     } else if (filterType === 'nomenclature') {
       setNomenclatureInput(value);
     } else if (filterType === 'article') {
       setArticleInput(value);
+    } else if (filterType === 'counterparty') {
+      setCounterpartyInput(value);
     }
   };
 
-  const handleApplyFilter = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+  const handleApplyFilter = (filterType: 'warehouse' | 'nomenclature' | 'article' | 'counterparty') => {
     const value = filterType === 'warehouse' 
       ? warehouseInput.trim() 
       : filterType === 'nomenclature'
       ? nomenclatureInput.trim()
-      : articleInput.trim();
+      : filterType === 'article'
+      ? articleInput.trim()
+      : counterpartyInput.trim();
     
     console.log('handleApplyFilter:', { filterType, value });
     
@@ -156,19 +163,24 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
       } else if (filterType === 'article') {
         setArticle(value);
         setArticleInput('');
+      } else if (filterType === 'counterparty') {
+        setCounterparty(value);
+        setCounterpartyInput('');
       }
       setPage(1);
       setActiveFilterInput(null);
     }
   };
 
-  const handleFilterInputBlur = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+  const handleFilterInputBlur = (filterType: 'warehouse' | 'nomenclature' | 'article' | 'counterparty') => {
     // При blur проверяем, есть ли значение
     const value = filterType === 'warehouse' 
       ? warehouseInput.trim() 
       : filterType === 'nomenclature'
       ? nomenclatureInput.trim()
-      : articleInput.trim();
+      : filterType === 'article'
+      ? articleInput.trim()
+      : counterpartyInput.trim();
     
     // Если значение пустое, скрываем инпут
     if (!value) {
@@ -178,12 +190,14 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
         setNomenclatureInput('');
       } else if (filterType === 'article') {
         setArticleInput('');
+      } else if (filterType === 'counterparty') {
+        setCounterpartyInput('');
       }
       setActiveFilterInput(null);
     }
   };
 
-  const handleEditFilter = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+  const handleEditFilter = (filterType: 'warehouse' | 'nomenclature' | 'article' | 'counterparty') => {
     // При клике на чипс открываем инпут для редактирования
     setActiveFilterInput(filterType);
     // Заполняем инпут текущим значением фильтра
@@ -193,10 +207,12 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
       setNomenclatureInput(nomenclature);
     } else if (filterType === 'article') {
       setArticleInput(article);
+    } else if (filterType === 'counterparty') {
+      setCounterpartyInput(counterparty);
     }
   };
 
-  const handleRemoveFilter = (filterType: 'warehouse' | 'nomenclature' | 'article') => {
+  const handleRemoveFilter = (filterType: 'warehouse' | 'nomenclature' | 'article' | 'counterparty') => {
     if (filterType === 'warehouse') {
       setWarehouse('');
       setWarehouseInput('');
@@ -206,6 +222,9 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     } else if (filterType === 'article') {
       setArticle('');
       setArticleInput('');
+    } else if (filterType === 'counterparty') {
+      setCounterparty('');
+      setCounterpartyInput('');
     }
     setPage(1);
   };
@@ -217,12 +236,14 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     setNomenclatureInput('');
     setArticle('');
     setArticleInput('');
+    setCounterparty('');
+    setCounterpartyInput('');
     setActiveFilterInput(null);
     setPage(1);
   };
 
   // Подсчитываем количество активных фильтров
-  const activeFiltersCount = [warehouse, nomenclature, article].filter(Boolean).length;
+  const activeFiltersCount = [warehouse, nomenclature, article, counterparty].filter(Boolean).length;
 
   // Закрытие выпадающего списка при клике вне
   useEffect(() => {
@@ -259,6 +280,7 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     // Форматируем данные для экспорта
     const exportData = stocks.map((stock) => ({
       'Склад': stock.warehouse,
+      'Контрагент': stock.counterparty || '',
       'Номенклатура': stock.nomenclature,
       'Артикул': stock.article,
       'Остаток': stock.quantity,
@@ -284,7 +306,7 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     }
   }, [onExportReady, handleExport]);
 
-  const getFilterLabel = (type: 'warehouse' | 'nomenclature' | 'article') => {
+  const getFilterLabel = (type: 'warehouse' | 'nomenclature' | 'article' | 'counterparty') => {
     switch (type) {
       case 'warehouse':
         return 'Склад';
@@ -292,6 +314,8 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
         return 'Номенклатура';
       case 'article':
         return 'Артикул';
+      case 'counterparty':
+        return 'Контрагент';
     }
   };
 
@@ -368,6 +392,14 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
                       Артикул
+                    </DropdownItem>
+                  )}
+                  {!counterparty && activeFilterInput !== 'counterparty' && (
+                    <DropdownItem
+                      onItemClick={() => handleFilterSelect('counterparty')}
+                      className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
+                    >
+                      Контрагент
                     </DropdownItem>
                   )}
                 </Dropdown>
@@ -459,7 +491,9 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
                   ? warehouseInput
                   : activeFilterInput === 'nomenclature'
                   ? nomenclatureInput
-                  : articleInput
+                  : activeFilterInput === 'article'
+                  ? articleInput
+                  : counterpartyInput
               }
               onChange={(e) => handleFilterInputChange(activeFilterInput, e.target.value)}
               onBlur={() => handleFilterInputBlur(activeFilterInput)}
@@ -481,7 +515,9 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
                   ? !warehouseInput.trim()
                   : activeFilterInput === 'nomenclature'
                   ? !nomenclatureInput.trim()
-                  : !articleInput.trim()
+                  : activeFilterInput === 'article'
+                  ? !articleInput.trim()
+                  : !counterpartyInput.trim()
               }
               aria-label="Применить фильтр"
             >
@@ -556,12 +592,33 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
               </button>
             </div>
           )}
+          {counterparty && (
+            <div 
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+              onClick={() => handleEditFilter('counterparty')}
+            >
+              <span>Контрагент: {counterparty}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveFilter('counterparty');
+                }}
+                className="hover:text-blue-900 dark:hover:text-blue-200 transition-colors"
+                aria-label="Удалить фильтр"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
         <div className="max-w-full overflow-x-auto">
-          <div className="min-w-[1102px]">
+          <div className="min-w-[1302px]">
             <Table>
               {/* Table Header */}
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
@@ -571,6 +628,12 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
                     className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
                   >
                     Склад
+                  </TableCell>
+                  <TableCell
+                    isHeader
+                    className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                  >
+                    Контрагент
                   </TableCell>
                   <TableCell
                     isHeader
@@ -619,7 +682,7 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="px-4 py-8 text-center">
+                    <TableCell colSpan={5} className="px-4 py-8 text-center">
                       <div className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                         <span className="ml-2 text-gray-600 dark:text-gray-400">Загрузка данных...</span>
@@ -628,17 +691,17 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="px-4 py-8 text-center">
+                    <TableCell colSpan={5} className="px-4 py-8 text-center">
                       <div className="text-red-600 dark:text-red-400">{error}</div>
                     </TableCell>
                   </TableRow>
                 ) : !stocks || stocks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="px-4 py-8 text-center">
+                    <TableCell colSpan={5} className="px-4 py-8 text-center">
                       <div className="text-gray-500 dark:text-gray-400">
                         {selectedClients.length === 0 
                           ? 'Выберите клиентов для отображения данных' 
-                          : (warehouse || nomenclature || article)
+                          : (warehouse || nomenclature || article || counterparty)
                           ? 'Ничего не найдено по выбранным фильтрам'
                           : 'Нет данных по выбранным клиентам'}
                       </div>
@@ -649,6 +712,10 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
                     <TableRow key={stock.id}>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {stock.warehouse}
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
+                        {stock.counterparty || '-'}
                       </TableCell>
 
                       <TableCell className="px-5 py-4 text-gray-500 sm:px-6 text-start text-theme-sm dark:text-gray-400">

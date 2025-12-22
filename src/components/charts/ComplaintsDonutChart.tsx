@@ -145,13 +145,26 @@ export default function ComplaintsDonutChart({ data, viewMode }: ComplaintsDonut
     } catch (error) {
       console.warn('Chart update error:', error);
     }
-  }, [hoveredIndex, centerLabel, isDark, isChartReady, viewMode]);
+  }, [hoveredIndex, centerLabel, isDark, isChartReady]);
 
   const options: ApexOptions = useMemo(() => ({
     chart: {
       fontFamily: "Roboto, sans-serif",
       type: "donut",
       height: 350,
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        },
+        dynamicAnimation: {
+          enabled: true,
+          speed: 800
+        }
+      },
       events: {
         mounted: (chartContext) => {
           chartInstanceRef.current = chartContext;
@@ -222,4 +235,3 @@ export default function ComplaintsDonutChart({ data, viewMode }: ComplaintsDonut
     </div>
   );
 }
-

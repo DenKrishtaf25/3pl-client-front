@@ -7,6 +7,7 @@ export interface IStock {
   nomenclature: string;
   article: string;
   quantity: number;
+  counterparty?: string;
   clientTIN: string;
   createdAt?: string;
   updatedAt?: string;
@@ -59,6 +60,9 @@ class StockService {
       }
       if (params?.article) {
         queryParams.append('article', params.article);
+      }
+      if (params?.counterparty) {
+        queryParams.append('counterparty', params.counterparty);
       }
 
       const url = queryParams.toString() 
