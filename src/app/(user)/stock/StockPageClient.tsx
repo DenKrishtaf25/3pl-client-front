@@ -7,13 +7,16 @@ import { Download, RotateCw } from "lucide-react";
 import { stockService } from "@/services/stock.service";
 
 export default function StockPageClient() {
-  const [exportFn, setExportFn] = useState<(() => void) | null>(null);
+  const [exportFn, setExportFn] = useState<(() => void | Promise<void>) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastImportAt, setLastImportAt] = useState<string | null>(null);
   const [loadingMeta, setLoadingMeta] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const refreshKeyRef = useRef(0);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastExportTimeRef = useRef<number>(0);
+  const EXPORT_COOLDOWN = 3000; // 3 секунды между экспортами
 
   useEffect(() => {
     const fetchLastImport = async () => {
@@ -39,9 +42,34 @@ export default function StockPageClient() {
     };
   }, []);
 
-  const handleExportReady = (fn: () => void) => {
+  const handleExportReady = (fn: () => void | Promise<void>) => {
     setExportFn(() => fn);
     setIsLoading(false);
+  };
+
+  const handleExport = async () => {
+    if (!exportFn || isExporting) return;
+    
+    // Проверяем cooldown (время с последнего экспорта)
+    const now = Date.now();
+    const timeSinceLastExport = now - lastExportTimeRef.current;
+    
+    if (timeSinceLastExport < EXPORT_COOLDOWN) {
+      const remainingSeconds = Math.ceil((EXPORT_COOLDOWN - timeSinceLastExport) / 1000);
+      alert(`Пожалуйста, подождите ${remainingSeconds} секунд перед следующим экспортом`);
+      return;
+    }
+    
+    setIsExporting(true);
+    lastExportTimeRef.current = now;
+    
+    try {
+      await exportFn();
+    } catch (error) {
+      console.error('Export error:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleRefresh = async () => {
@@ -120,13 +148,13 @@ export default function StockPageClient() {
                 Обновить
               </button>
               <button
-                onClick={() => exportFn?.()}
-                disabled={!exportFn || isLoading}
+                onClick={handleExport}
+                disabled={!exportFn || isLoading || isExporting}
                 className="flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
-                title="Экспорт в Excel"
+                title={isExporting ? "Экспорт выполняется..." : "Экспорт в Excel"}
               >
-                <Download className="w-4 h-4" />
-                Экспорт
+                <Download className={`w-4 h-4 ${isExporting ? 'animate-pulse' : ''}`} />
+                {isExporting ? 'Экспорт...' : 'Экспорт'}
               </button>
             </div>
           }

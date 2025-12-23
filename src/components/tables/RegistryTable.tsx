@@ -25,7 +25,7 @@ import RussianLicensePlate from "../common/RussianLicensePlate";
 type FilterType = 'branch' | 'counterparty' | 'vehicleNumber' | 'driverName' | 'orderNumber' | 'orderType' | 'status' | 'processingType' | 'shipmentPlan' | 'unloadingDate' | 'departureDate';
 
 interface RegistryTableProps {
-  onExportReady?: (exportFn: () => void) => void;
+  onExportReady?: (exportFn: () => void | Promise<void>) => void;
 }
 
 export default function RegistryTable({ onExportReady }: RegistryTableProps = {}) {
@@ -605,29 +605,89 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
     return `${day}.${month}.${year}`;
   };
 
-  const handleExport = useCallback(() => {
-    if (registries.length === 0) {
-      alert('Нет данных для экспорта');
-      return;
+  const handleExport = useCallback(async () => {
+    try {
+      // Если клиенты не выбраны, не делаем запрос
+      if (selectedClients.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+      
+      // Получаем ИНН выбранных клиентов
+      const clientTINs = selectedClients.map(client => client.TIN);
+      const clientTINParam = clientTINs.length > 0 ? clientTINs.join(',') : undefined;
+      
+      // Формируем параметры запроса с очень большим limit для получения всех данных
+      const requestParams: IRegistryQueryParams = {
+        page: 1,
+        limit: 100000, // Очень большое число для получения всех данных
+        sortBy,
+        sortOrder,
+        clientTIN: clientTINParam,
+        branch: branch || undefined,
+        counterparty: counterparty || undefined,
+        vehicleNumber: vehicleNumber || undefined,
+        driverName: driverName || undefined,
+        orderNumber: orderNumber || undefined,
+        orderType: orderType || undefined,
+        status: status || undefined,
+        processingType: processingType || undefined,
+      };
+      
+      // Добавляем фильтры по датам
+      if (shipmentPlanFrom) {
+        requestParams.shipmentPlanFrom = formatDateToISO(shipmentPlanFrom, true);
+      }
+      if (shipmentPlanTo) {
+        requestParams.shipmentPlanTo = formatDateToISO(shipmentPlanTo, true);
+      }
+      if (unloadingDateFrom) {
+        requestParams.unloadingDateFrom = formatDateToISO(unloadingDateFrom, false);
+      }
+      if (unloadingDateTo) {
+        requestParams.unloadingDateTo = formatDateToISO(unloadingDateTo, false);
+      }
+      if (departureDateFrom) {
+        requestParams.departureDateFrom = formatDateToISO(departureDateFrom, true);
+      }
+      if (departureDateTo) {
+        requestParams.departureDateTo = formatDateToISO(departureDateTo, true);
+      }
+      
+      // Загружаем все данные одним запросом
+      const response = await registryService.getPaginated(requestParams);
+      
+      // Получаем все данные из ответа
+      const allRegistries = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      if (allRegistries.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+
+      // Форматируем данные для экспорта
+      const exportData = allRegistries.map((registry) => ({
+        'Филиал': registry.branch,
+        'Контрагент': registry.counterparty,
+        'Номер ТС': registry.vehicleNumber || '',
+        'Тип прихода': registry.orderType,
+        'Номер рейса': registry.orderNumber,
+        'ФИО водителя': registry.driverName || '',
+        'Тип обработки': registry.processingType || '',
+        'Дата планового прибытия': formatDateTime(registry.shipmentPlan),
+        'Дата факт прибытия': formatDateTime(registry.unloadingDate),
+        'Дата убытия': registry.departureDate ? formatDateTime(registry.departureDate) : '',
+        'Статус ТС': registry.status,
+      }));
+
+      exportToExcel(exportData, `Реестр_${new Date().toISOString().split('T')[0]}`);
+    } catch (error) {
+      console.error('Ошибка при экспорте:', error);
+      alert('Ошибка при загрузке данных для экспорта');
     }
-
-    // Форматируем данные для экспорта
-    const exportData = registries.map((registry) => ({
-      'Филиал': registry.branch,
-      'Контрагент': registry.counterparty,
-      'Номер ТС': registry.vehicleNumber || '',
-      'Тип прихода': registry.orderType,
-      'Номер рейса': registry.orderNumber,
-      'ФИО водителя': registry.driverName || '',
-      'Тип обработки': registry.processingType || '',
-      'Дата планового прибытия': formatDateTime(registry.shipmentPlan),
-      'Дата факт прибытия': formatDateTime(registry.unloadingDate),
-      'Дата убытия': registry.departureDate ? formatDateTime(registry.departureDate) : '',
-      'Статус ТС': registry.status,
-    }));
-
-    exportToExcel(exportData, `Реестр_${new Date().toISOString().split('T')[0]}`);
-  }, [registries]);
+  }, [selectedClients, sortBy, sortOrder, branch, counterparty, vehicleNumber, driverName, orderNumber, orderType, status, processingType, shipmentPlanFrom, shipmentPlanTo, unloadingDateFrom, unloadingDateTo, departureDateFrom, departureDateTo]);
 
   // Передаем функцию экспорта наружу
   useEffect(() => {

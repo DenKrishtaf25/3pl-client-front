@@ -24,7 +24,7 @@ import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
 type FilterType = 'branch' | 'counterparty' | 'orderNumber' | 'orderType' | 'status' | 'kisNumber' | 'acceptanceDate' | 'exportDate' | 'shipmentDate';
 
 interface OrdersTableProps {
-  onExportReady?: (exportFn: () => void) => void;
+  onExportReady?: (exportFn: () => void | Promise<void>) => void;
 }
 
 export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
@@ -595,31 +595,93 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
     return `${day}.${month}.${year}`;
   };
 
-  const handleExport = useCallback(() => {
-    if (orders.length === 0) {
-      alert('Нет данных для экспорта');
-      return;
+  const handleExport = useCallback(async () => {
+    try {
+      // Если клиенты не выбраны, не делаем запрос
+      if (selectedClients.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+      
+      // Получаем ИНН выбранных клиентов
+      const clientTINs = selectedClients.map(client => client.TIN);
+      const clientTINParam = clientTINs.length > 0 ? clientTINs.join(',') : undefined;
+      
+      // Формируем параметры запроса с очень большим limit для получения всех данных
+      const requestParams: IOrderQueryParams = {
+        page: 1,
+        limit: 100000, // Очень большое число для получения всех данных
+        sortBy,
+        sortOrder,
+        clientTIN: clientTINParam,
+        branch: branch || undefined,
+        counterparty: counterparty || undefined,
+        orderNumber: orderNumber || undefined,
+        orderType: orderType || undefined,
+        status: status || undefined,
+        kisNumber: kisNumber || undefined,
+      };
+      
+      // Добавляем фильтры по датам
+      if (acceptanceDateFrom) {
+        const combinedFrom = combineDateAndTime(acceptanceDateFrom, acceptanceDateFromTime);
+        requestParams.acceptanceDateFrom = formatDateToISO(combinedFrom, true);
+      }
+      if (acceptanceDateTo) {
+        const combinedTo = combineDateAndTime(acceptanceDateTo, acceptanceDateToTime);
+        requestParams.acceptanceDateTo = formatDateToISO(combinedTo, true);
+      }
+      if (exportDateFrom) {
+        const combinedFrom = combineDateAndTime(exportDateFrom, exportDateFromTime);
+        requestParams.exportDateFrom = formatDateToISO(combinedFrom, true);
+      }
+      if (exportDateTo) {
+        const combinedTo = combineDateAndTime(exportDateTo, exportDateToTime);
+        requestParams.exportDateTo = formatDateToISO(combinedTo, true);
+      }
+      if (shipmentDateFrom) {
+        requestParams.shipmentDateFrom = formatDateToISO(shipmentDateFrom, true);
+      }
+      if (shipmentDateTo) {
+        requestParams.shipmentDateTo = formatDateToISO(shipmentDateTo, true);
+      }
+      
+      // Загружаем все данные одним запросом
+      const response = await orderService.getPaginated(requestParams);
+      
+      // Получаем все данные из ответа
+      const allOrders = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      if (allOrders.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+
+      // Форматируем данные для экспорта
+      const exportData = allOrders.map((order) => ({
+        'Филиал': order.branch,
+        'Тип заказа': order.orderType,
+        '№ заказа': order.orderNumber,
+        '№ КИС': order.kisNumber || '',
+        'Дата выгрузки заказа': formatDate(order.exportDate),
+        'Статус': order.status,
+        'Контрагент': order.counterparty,
+        'Плановая дата отгрузки': formatDateTime(order.shipmentDate),
+        'Дата приемки': formatDateTime(order.acceptanceDate),
+        'Упаковок план': order.packagesPlanned,
+        'Упаковок факт': order.packagesActual,
+        'Строк план': order.linesPlanned,
+        'Строк факт': order.linesActual,
+      }));
+
+      exportToExcel(exportData, `Заказы_${new Date().toISOString().split('T')[0]}`);
+    } catch (error) {
+      console.error('Ошибка при экспорте:', error);
+      alert('Ошибка при загрузке данных для экспорта');
     }
-
-    // Форматируем данные для экспорта
-    const exportData = orders.map((order) => ({
-      'Филиал': order.branch,
-      'Тип заказа': order.orderType,
-      '№ заказа': order.orderNumber,
-      '№ КИС': order.kisNumber || '',
-      'Дата выгрузки заказа': formatDate(order.exportDate),
-      'Статус': order.status,
-      'Контрагент': order.counterparty,
-      'Плановая дата отгрузки': formatDateTime(order.shipmentDate),
-      'Дата приемки': formatDateTime(order.acceptanceDate),
-      'Упаковок план': order.packagesPlanned,
-      'Упаковок факт': order.packagesActual,
-      'Строк план': order.linesPlanned,
-      'Строк факт': order.linesActual,
-    }));
-
-    exportToExcel(exportData, `Заказы_${new Date().toISOString().split('T')[0]}`);
-  }, [orders]);
+  }, [selectedClients, sortBy, sortOrder, branch, counterparty, orderNumber, orderType, status, kisNumber, acceptanceDateFrom, acceptanceDateTo, exportDateFrom, exportDateTo, shipmentDateFrom, shipmentDateTo, acceptanceDateFromTime, acceptanceDateToTime, exportDateFromTime, exportDateToTime]);
 
   // Передаем функцию экспорта наружу
   useEffect(() => {

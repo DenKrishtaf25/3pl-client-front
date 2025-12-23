@@ -17,7 +17,7 @@ import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
 
 interface BasicTableOneProps {
-  onExportReady?: (exportFn: () => void) => void;
+  onExportReady?: (exportFn: () => void | Promise<void>) => void;
 }
 
 export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}) {
@@ -271,23 +271,59 @@ export default function BasicTableOne({ onExportReady }: BasicTableOneProps = {}
     };
   }, [isFiltersDropdownOpen, isLimitDropdownOpen]);
 
-  const handleExport = useCallback(() => {
-    if (stocks.length === 0) {
-      alert('Нет данных для экспорта');
-      return;
+  const handleExport = useCallback(async () => {
+    try {
+      // Если клиенты не выбраны, не делаем запрос
+      if (selectedClients.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+      
+      // Получаем ИНН выбранных клиентов
+      const clientTINs = selectedClients.map(client => client.TIN);
+      const clientTINParam = clientTINs.length > 0 ? clientTINs.join(',') : undefined;
+      
+      // Формируем параметры запроса с очень большим limit для получения всех данных
+      const queryParams = {
+        page: 1,
+        limit: 100000, // Очень большое число для получения всех данных
+        sortBy,
+        sortOrder,
+        clientTIN: clientTINParam,
+        warehouse: warehouse || undefined,
+        nomenclature: nomenclature || undefined,
+        article: article || undefined,
+        counterparty: counterparty || undefined,
+      };
+      
+      // Загружаем все данные одним запросом
+      const response = await stockService.getPaginated(queryParams);
+      
+      // Получаем все данные из ответа
+      const allStocks = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      if (allStocks.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+
+      // Форматируем данные для экспорта
+      const exportData = allStocks.map((stock) => ({
+        'Склад': stock.warehouse,
+        'Контрагент': stock.counterparty || '',
+        'Номенклатура': stock.nomenclature,
+        'Артикул': stock.article,
+        'Остаток': stock.quantity,
+      }));
+
+      exportToExcel(exportData, `Товарный_запас_${new Date().toISOString().split('T')[0]}`);
+    } catch (error) {
+      console.error('Ошибка при экспорте:', error);
+      alert('Ошибка при загрузке данных для экспорта');
     }
-
-    // Форматируем данные для экспорта
-    const exportData = stocks.map((stock) => ({
-      'Склад': stock.warehouse,
-      'Контрагент': stock.counterparty || '',
-      'Номенклатура': stock.nomenclature,
-      'Артикул': stock.article,
-      'Остаток': stock.quantity,
-    }));
-
-    exportToExcel(exportData, `Товарный_запас_${new Date().toISOString().split('T')[0]}`);
-  }, [stocks]);
+  }, [selectedClients, sortBy, sortOrder, warehouse, nomenclature, article, counterparty]);
 
   const handleSort = (field: 'article' | 'quantity') => {
     if (sortBy === field) {
