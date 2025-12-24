@@ -23,7 +23,7 @@ import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
 type FilterType = 'branch' | 'status' | 'date' | 'complaint_type' | 'confirmation';
 
 interface ComplaintsTableProps {
-  onExportReady?: (exportFn: () => void) => void;
+  onExportReady?: (exportFn: () => void | Promise<void>) => void;
 }
 
 export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps = {}) {
@@ -371,28 +371,61 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
     return `${day}.${month}.${year}`;
   };
 
-  const handleExport = useCallback(() => {
-    if (complaints.length === 0) {
-      alert('Нет данных для экспорта');
-      return;
+  const handleExport = useCallback(async () => {
+    try {
+      // Формируем параметры запроса с очень большим limit для получения всех данных
+      const requestParams: IComplaintQueryParams = {
+        page: 1,
+        limit: 100000, // Очень большое число для получения всех данных
+        sortBy,
+        sortOrder,
+        branch: branch || undefined,
+        status: status || undefined,
+        complaint_type: complaint_type || undefined,
+        confirmation: confirmation !== null ? confirmation : undefined,
+      };
+      
+      // Добавляем фильтры по датам
+      if (dateFrom) {
+        requestParams.dateFrom = formatDateToISO(dateFrom);
+      }
+      if (dateTo) {
+        requestParams.dateTo = formatDateToISO(dateTo);
+      }
+      
+      // Загружаем все данные одним запросом
+      const response = await complaintsService.getPaginated(requestParams);
+      
+      // Получаем все данные из ответа
+      const allComplaints = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      if (allComplaints.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+
+      // Форматируем данные для экспорта
+      const exportData = allComplaints.map((item) => ({
+        'Филиал': item.branch,
+        'Клиент': item.client,
+        'Дата создания': formatDate(item.creationDate),
+        'Номер рекламации': item.complaintNumber,
+        'Тип претензии': item.complaintType,
+        'Статус': item.status,
+        'Подтверждение': item.confirmation ? 'Да' : 'Нет',
+        'Срок выполнения': item.deadline ? formatDate(item.deadline) : '-',
+        'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '-',
+        'ИНН клиента': item.clientTIN,
+      }));
+
+      exportToExcel(exportData, `Рекламации_${new Date().toISOString().split('T')[0]}`);
+    } catch (error) {
+      console.error('Ошибка при экспорте:', error);
+      alert('Ошибка при загрузке данных для экспорта');
     }
-
-    // Форматируем данные для экспорта
-    const exportData = complaints.map((item) => ({
-      'Филиал': item.branch,
-      'Клиент': item.client,
-      'Дата создания': formatDate(item.creationDate),
-      'Номер рекламации': item.complaintNumber,
-      'Тип претензии': item.complaintType,
-      'Статус': item.status,
-      'Подтверждение': item.confirmation ? 'Да' : 'Нет',
-      'Срок выполнения': item.deadline ? formatDate(item.deadline) : '-',
-      'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '-',
-      'ИНН клиента': item.clientTIN,
-    }));
-
-    exportToExcel(exportData, `Рекламации_${new Date().toISOString().split('T')[0]}`);
-  }, [complaints]);
+  }, [sortBy, sortOrder, branch, status, complaint_type, confirmation, dateFrom, dateTo]);
 
   // Передаем функцию экспорта наружу
   useEffect(() => {

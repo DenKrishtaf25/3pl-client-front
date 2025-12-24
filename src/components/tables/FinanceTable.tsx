@@ -23,7 +23,7 @@ import { CheckLineIcon, TrashBinIcon, ChevronDownIcon } from "@/icons";
 type FilterType = 'branch' | 'status' | 'date' | 'amountFrom' | 'completionDate' | 'closingDate';
 
 interface FinanceTableProps {
-  onExportReady?: (exportFn: () => void) => void;
+  onExportReady?: (exportFn: () => void | Promise<void>) => void;
 }
 
 export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) {
@@ -408,26 +408,70 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     }).format(amount);
   };
 
-  const handleExport = useCallback(() => {
-    if (finance.length === 0) {
-      alert('Нет данных для экспорта');
-      return;
+  const handleExport = useCallback(async () => {
+    try {
+      // Формируем параметры запроса с очень большим limit для получения всех данных
+      const requestParams: IFinanceQueryParams = {
+        page: 1,
+        limit: 100000, // Очень большое число для получения всех данных
+        sortBy,
+        sortOrder,
+        branch: branch || undefined,
+        status: status || undefined,
+        amountFrom: amountFrom ? parseFloat(amountFrom) : undefined,
+      };
+      
+      // Добавляем фильтры по датам
+      if (dateFrom) {
+        requestParams.dateFrom = formatDateToISO(dateFrom);
+      }
+      if (dateTo) {
+        requestParams.dateTo = formatDateToISO(dateTo);
+      }
+      if (completionDateFrom) {
+        requestParams.completionDateFrom = formatDateToISO(completionDateFrom);
+      }
+      if (completionDateTo) {
+        requestParams.completionDateTo = formatDateToISO(completionDateTo);
+      }
+      if (closingDateFrom) {
+        requestParams.closingDateFrom = formatDateToISO(closingDateFrom);
+      }
+      if (closingDateTo) {
+        requestParams.closingDateTo = formatDateToISO(closingDateTo);
+      }
+      
+      // Загружаем все данные одним запросом
+      const response = await financeService.getPaginated(requestParams);
+      
+      // Получаем все данные из ответа
+      const allFinance = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      if (allFinance.length === 0) {
+        alert('Нет данных для экспорта');
+        return;
+      }
+
+      // Форматируем данные для экспорта
+      const exportData = allFinance.map((item) => ({
+        'Филиал': item.branch,
+        'Статус': item.status,
+        'Дата': formatDate(item.date),
+        'Сумма': item.amount,
+        '№ заказа': item.orderNumber || '',
+        'Описание': item.description || '',
+        'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '',
+        'Дата закрытия': item.closingDate ? formatDate(item.closingDate) : '',
+      }));
+
+      exportToExcel(exportData, `Финансы_${new Date().toISOString().split('T')[0]}`);
+    } catch (error) {
+      console.error('Ошибка при экспорте:', error);
+      alert('Ошибка при загрузке данных для экспорта');
     }
-
-    // Форматируем данные для экспорта
-    const exportData = finance.map((item) => ({
-      'Филиал': item.branch,
-      'Статус': item.status,
-      'Дата': formatDate(item.date),
-      'Сумма': item.amount,
-      '№ заказа': item.orderNumber || '',
-      'Описание': item.description || '',
-      'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '',
-      'Дата закрытия': item.closingDate ? formatDate(item.closingDate) : '',
-    }));
-
-    exportToExcel(exportData, `Финансы_${new Date().toISOString().split('T')[0]}`);
-  }, [finance]);
+  }, [sortBy, sortOrder, branch, status, amountFrom, dateFrom, dateTo, completionDateFrom, completionDateTo, closingDateFrom, closingDateTo]);
 
   // Передаем функцию экспорта наружу
   useEffect(() => {
