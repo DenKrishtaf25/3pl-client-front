@@ -724,7 +724,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
         'Тип заказа': order.orderType,
         '№ заказа': order.orderNumber,
         '№ КИС': order.kisNumber || '',
-        'Дата выгрузки заказа': formatDate(order.exportDate),
+        'Дата погрузки заказа в WMS': formatDate(order.exportDate),
         'Статус': order.status,
         'Контрагент': order.counterparty,
         'Плановая дата отгрузки': formatDateTime(order.shipmentDate),
@@ -776,7 +776,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       case 'acceptanceDate':
         return 'Дата приемки';
       case 'exportDate':
-        return 'Дата выгрузки заказа';
+        return 'Дата погрузки заказа в WMS';
       case 'shipmentDate':
         return 'Плановая дата отгрузки';
     }
@@ -911,7 +911,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('exportDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Дата выгрузки заказа
+                      Дата погрузки заказа в WMS
                     </DropdownItem>
                   )}
                   {!hasFilter('shipmentDate') && activeFilterInput !== 'shipmentDate' && (
@@ -1387,7 +1387,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('exportDate')}
             >
               <span>
-                Дата выгрузки заказа: {exportDateFrom && formatDateForChip(exportDateFrom, true)}
+                Дата погрузки заказа в WMS: {exportDateFrom && formatDateForChip(exportDateFrom, true)}
                 {exportDateFrom && exportDateTo && ' — '}
                 {exportDateTo && formatDateForChip(exportDateTo, true)}
               </span>
@@ -1484,7 +1484,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('exportDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Дата выгрузки заказа
+                    Дата погрузки заказа в WMS
                     {sortBy === 'exportDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}
