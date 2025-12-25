@@ -1496,6 +1496,18 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                   isHeader
                   className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                 >
+                  Статус
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                >
+                  Контрагент
+                </TableCell>
+                <TableCell
+                  isHeader
+                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
+                >
                   <button
                     type="button"
                     onClick={() => handleSort('shipmentDate')}
@@ -1508,18 +1520,6 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       </span>
                     )}
                   </button>
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
-                >
-                  Статус
-                </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
-                  Контрагент
                 </TableCell>
                 <TableCell
                   isHeader
@@ -1616,10 +1616,6 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                         {formatDateTime(order.exportDate)}
                       </TableCell>
 
-                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {formatDateTime(order.shipmentDate)}
-                      </TableCell>
-
                       <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                           {order.status}
@@ -1628,6 +1624,10 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 max-w-[200px] truncate">
                         {order.counterparty}
+                      </TableCell>
+
+                      <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
+                        {formatDateTime(order.shipmentDate)}
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">

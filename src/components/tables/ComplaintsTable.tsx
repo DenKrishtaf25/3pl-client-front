@@ -460,7 +460,7 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
         'Тип претензии': item.complaintType,
         'Статус': item.status,
         'Подтверждение': item.confirmation ? 'Да' : 'Нет',
-        'Срок выполнения': item.deadline ? formatDate(item.deadline) : '-',
+        'Плановый срок закрытия': item.deadline ? formatDate(item.deadline) : '-',
         'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '-',
         'ИНН клиента': item.clientTIN,
       }));
@@ -1053,7 +1053,7 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
                     isHeader
                     className="px-3 py-2 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400 whitespace-nowrap"
                   >
-                    Срок выполнения
+                    Плановый срок закрытия
                   </TableCell>
                   <TableCell
                     isHeader
