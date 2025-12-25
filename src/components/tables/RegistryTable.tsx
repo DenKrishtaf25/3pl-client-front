@@ -664,6 +664,12 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
     return `${day}.${month}.${year}`;
   };
 
+  // Функция для капитализации первой буквы статуса
+  const capitalizeStatus = (status: string): string => {
+    if (!status) return status;
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  };
+
   const handleExport = useCallback(async () => {
     try {
       // Если клиенты не выбраны, не делаем запрос
@@ -738,7 +744,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
         'Дата планового прибытия': formatDateTime(registry.shipmentPlan),
         'Дата факт прибытия': formatDateTime(registry.unloadingDate),
         'Дата убытия': registry.departureDate ? formatDateTime(registry.departureDate) : '',
-        'Статус ТС': registry.status,
+        'Статус ТС': capitalizeStatus(registry.status),
       }));
 
       exportToExcel(exportData, `Реестр_${new Date().toISOString().split('T')[0]}`);
@@ -1201,7 +1207,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                       }`}
                     >
-                      {statusValue}
+                      {capitalizeStatus(statusValue)}
                     </button>
                   ))
                 )}
@@ -1371,7 +1377,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
               onClick={() => handleEditFilter('status')}
             >
-              <span>Статус ТС: {status}</span>
+              <span>Статус ТС: {capitalizeStatus(status)}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -1649,7 +1655,7 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
 
                     <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                        {registry.status}
+                        {capitalizeStatus(registry.status)}
                       </span>
                     </TableCell>
 

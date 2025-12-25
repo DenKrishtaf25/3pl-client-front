@@ -453,6 +453,12 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
     }).format(amount);
   };
 
+  // Функция для капитализации первой буквы статуса
+  const capitalizeStatus = (status: string): string => {
+    if (!status) return status;
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  };
+
   const handleExport = useCallback(async () => {
     try {
       // Формируем параметры запроса с очень большим limit для получения всех данных
@@ -502,13 +508,13 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
       // Форматируем данные для экспорта
       const exportData = allFinance.map((item) => ({
         'Филиал': item.branch,
-        'Статус': item.status,
-        'Дата': formatDate(item.date),
+        'Статус': capitalizeStatus(item.status),
+        'Дата создания': formatDate(item.date),
         'Сумма': item.amount,
         '№ заказа': item.orderNumber || '',
         'Описание': item.description || '',
         'Дата завершения': item.completionDate ? formatDate(item.completionDate) : '',
-        'Дата закрытия': item.closingDate ? formatDate(item.closingDate) : '',
+        'Плановый срок закрытия': item.closingDate ? formatDate(item.closingDate) : '',
       }));
 
       exportToExcel(exportData, `Финансы_${new Date().toISOString().split('T')[0]}`);
@@ -542,13 +548,13 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
       case 'status':
         return 'Статус';
       case 'date':
-        return 'Дата';
+        return 'Дата создания';
       case 'amountFrom':
         return 'Сумма от';
       case 'completionDate':
         return 'Дата завершения';
       case 'closingDate':
-        return 'Дата закрытия';
+        return 'Плановый срок закрытия';
     }
   };
 
@@ -641,7 +647,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                       onItemClick={() => handleFilterSelect('date')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Дата
+                      Дата создания
                     </DropdownItem>
                   )}
                   {!hasFilter('amountFrom') && activeFilterInput !== 'amountFrom' && (
@@ -665,7 +671,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                       onItemClick={() => handleFilterSelect('closingDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Дата закрытия
+                      Плановый срок закрытия
                     </DropdownItem>
                   )}
                 </Dropdown>
@@ -859,7 +865,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                       }`}
                     >
-                      {statusValue}
+                      {capitalizeStatus(statusValue)}
                     </button>
                   ))
                 )}
@@ -924,7 +930,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 text-sm cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
               onClick={() => handleEditFilter('status')}
             >
-              <span>Статус: {status}</span>
+              <span>Статус: {capitalizeStatus(status)}</span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -967,7 +973,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               onClick={() => handleEditFilter('date')}
             >
               <span>
-                Дата: {dateFrom && formatDateForChip(dateFrom)}
+                Дата создания: {dateFrom && formatDateForChip(dateFrom)}
                 {dateFrom && dateTo && ' — '}
                 {dateTo && formatDateForChip(dateTo)}
               </span>
@@ -1017,7 +1023,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
               onClick={() => handleEditFilter('closingDate')}
             >
               <span>
-                Дата закрытия: {closingDateFrom && formatDateForChip(closingDateFrom)}
+                Плановый срок закрытия: {closingDateFrom && formatDateForChip(closingDateFrom)}
                 {closingDateFrom && closingDateTo && ' — '}
                 {closingDateTo && formatDateForChip(closingDateTo)}
               </span>
@@ -1066,7 +1072,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                       onClick={() => handleSort('date')}
                       className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     >
-                      Дата
+                      Дата создания
                       {sortBy === 'date' && (
                         <span className="text-brand-500">
                           {sortOrder === 'asc' ? '↑' : '↓'}
@@ -1109,11 +1115,11 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   >
                     <button
                       type="button"
-                      onClick={() => handleSort('completionDate')}
+                      onClick={() => handleSort('closingDate')}
                       className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     >
-                      Дата завершения
-                      {sortBy === 'completionDate' && (
+                      Плановый срок закрытия
+                      {sortBy === 'closingDate' && (
                         <span className="text-brand-500">
                           {sortOrder === 'asc' ? '↑' : '↓'}
                         </span>
@@ -1126,11 +1132,11 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                   >
                     <button
                       type="button"
-                      onClick={() => handleSort('closingDate')}
+                      onClick={() => handleSort('completionDate')}
                       className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                     >
-                      Дата закрытия
-                      {sortBy === 'closingDate' && (
+                      Дата завершения
+                      {sortBy === 'completionDate' && (
                         <span className="text-brand-500">
                           {sortOrder === 'asc' ? '↑' : '↓'}
                         </span>
@@ -1175,7 +1181,7 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
 
                       <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                          {item.status}
+                          {capitalizeStatus(item.status)}
                         </span>
                       </TableCell>
 
@@ -1196,11 +1202,11 @@ export default function FinanceTable({ onExportReady }: FinanceTableProps = {}) 
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {item.completionDate ? formatDate(item.completionDate) : '-'}
+                        {item.closingDate ? formatDate(item.closingDate) : '-'}
                       </TableCell>
 
                       <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
-                        {item.closingDate ? formatDate(item.closingDate) : '-'}
+                        {item.completionDate ? formatDate(item.completionDate) : '-'}
                       </TableCell>
                     </TableRow>
                   ))

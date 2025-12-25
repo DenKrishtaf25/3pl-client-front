@@ -74,6 +74,12 @@ export default function StatusStatsTable() {
     return new Intl.NumberFormat('ru-RU').format(count);
   };
 
+  // Функция для капитализации первой буквы статуса
+  const capitalizeStatus = (status: string): string => {
+    if (!status) return status;
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Таблица - 60% ширины */}
@@ -153,7 +159,7 @@ export default function StatusStatsTable() {
                   <TableRow key={`${item.status}-${index}`}>
                     <TableCell className="px-3 py-2 text-theme-xs whitespace-nowrap">
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                        {item.status}
+                        {capitalizeStatus(item.status)}
                       </span>
                     </TableCell>
                     <TableCell className="px-3 py-2 text-gray-500 text-theme-xs dark:text-gray-400 whitespace-nowrap">
