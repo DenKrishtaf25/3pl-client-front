@@ -89,6 +89,10 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
   const filtersDropdownRef = useRef<HTMLDivElement>(null);
   const [isLimitDropdownOpen, setIsLimitDropdownOpen] = useState(false);
   const limitDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Состояние для хранения всех уникальных статусов ТС
+  const [allStatuses, setAllStatuses] = useState<string[]>([]);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
 
   // Функция для объединения даты и времени
   const combineDateAndTime = (date: Date | null, time: string): Date | null => {
@@ -221,6 +225,59 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
   useEffect(() => {
     loadRegistries();
   }, [loadRegistries]);
+
+  // Функция для загрузки всех уникальных статусов ТС
+  const loadAllStatuses = useCallback(async () => {
+    try {
+      setLoadingStatuses(true);
+      
+      // Если клиенты не выбраны, не делаем запрос
+      if (selectedClients.length === 0) {
+        setAllStatuses([]);
+        return;
+      }
+      
+      // Получаем ИНН выбранных клиентов
+      const clientTINs = selectedClients.map(client => client.TIN);
+      const clientTINParam = clientTINs.length > 0 ? clientTINs.join(',') : undefined;
+      
+      // Загружаем все данные с большим лимитом для получения всех статусов
+      const requestParams: IRegistryQueryParams = {
+        page: 1,
+        limit: 10000, // Большой лимит для получения всех данных
+        clientTIN: clientTINParam,
+      };
+      
+      const response = await registryService.getPaginated(requestParams);
+      
+      // Извлекаем уникальные статусы
+      const allRegistries = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      const uniqueStatuses = Array.from(
+        new Set(
+          allRegistries
+            .map(registry => registry.status)
+            .filter((status): status is string => Boolean(status))
+        )
+      ).sort();
+      
+      setAllStatuses(uniqueStatuses);
+    } catch (err) {
+      console.error('Failed to load statuses:', err);
+      setAllStatuses([]);
+    } finally {
+      setLoadingStatuses(false);
+    }
+  }, [selectedClients]);
+
+  // Загружаем статусы при изменении выбранных клиентов или при открытии фильтра статуса
+  useEffect(() => {
+    if (activeFilterInput === 'status' && allStatuses.length === 0 && !loadingStatuses) {
+      loadAllStatuses();
+    }
+  }, [activeFilterInput, allStatuses.length, loadingStatuses, loadAllStatuses]);
 
   // Обработчики для фильтров
   const handleFilterSelect = (filterType: FilterType) => {
@@ -479,9 +536,11 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
         setDepartureDateToTime(extractTimeFromDate(departureDateTo));
       }
     } else {
-      // Для текстовых фильтров
-      const currentValue = getFilterValue(filterType);
-      setFilterInputValue(filterType, currentValue);
+      // Для текстовых фильтров (кроме статуса, который использует чипсы)
+      if (filterType !== 'status') {
+        const currentValue = getFilterValue(filterType);
+        setFilterInputValue(filterType, currentValue);
+      }
     }
   };
 
@@ -1117,6 +1176,35 @@ export default function RegistryTable({ onExportReady }: RegistryTableProps = {}
                 >
                   <CheckLineIcon />
                 </button>
+              </div>
+            ) : activeFilterInput === 'status' ? (
+              // UI для фильтра статуса - список чипсов
+              <div className="flex flex-wrap items-center gap-2">
+                {loadingStatuses ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Загрузка статусов...</div>
+                ) : allStatuses.length === 0 ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Нет доступных статусов</div>
+                ) : (
+                  allStatuses.map((statusValue) => (
+                    <button
+                      key={statusValue}
+                      type="button"
+                      onClick={() => {
+                        setStatus(statusValue);
+                        setStatusInput('');
+                        setPage(1);
+                        setActiveFilterInput(null);
+                      }}
+                      className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        status === statusValue
+                          ? 'bg-brand-500 text-white hover:bg-brand-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {statusValue}
+                    </button>
+                  ))
+                )}
               </div>
             ) : (
               // UI для текстовых фильтров

@@ -63,6 +63,10 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
   const filtersDropdownRef = useRef<HTMLDivElement>(null);
   const [isLimitDropdownOpen, setIsLimitDropdownOpen] = useState(false);
   const limitDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Состояние для хранения всех уникальных статусов
+  const [allStatuses, setAllStatuses] = useState<string[]>([]);
+  const [loadingStatuses, setLoadingStatuses] = useState(false);
 
   // Функция для форматирования даты в ISO формат
   const formatDateToISO = (date: Date | null): string | undefined => {
@@ -138,6 +142,48 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
   useEffect(() => {
     loadComplaints();
   }, [loadComplaints]);
+
+  // Функция для загрузки всех уникальных статусов
+  const loadAllStatuses = useCallback(async () => {
+    try {
+      setLoadingStatuses(true);
+      
+      // Загружаем все данные с большим лимитом для получения всех статусов
+      const requestParams: IComplaintQueryParams = {
+        page: 1,
+        limit: 10000, // Большой лимит для получения всех данных
+      };
+      
+      const response = await complaintsService.getPaginated(requestParams);
+      
+      // Извлекаем уникальные статусы
+      const allComplaints = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      const uniqueStatuses = Array.from(
+        new Set(
+          allComplaints
+            .map(item => item.status)
+            .filter((status): status is string => Boolean(status))
+        )
+      ).sort();
+      
+      setAllStatuses(uniqueStatuses);
+    } catch (err) {
+      console.error('Failed to load statuses:', err);
+      setAllStatuses([]);
+    } finally {
+      setLoadingStatuses(false);
+    }
+  }, []);
+
+  // Загружаем статусы при открытии фильтра статуса
+  useEffect(() => {
+    if (activeFilterInput === 'status' && allStatuses.length === 0 && !loadingStatuses) {
+      loadAllStatuses();
+    }
+  }, [activeFilterInput, allStatuses.length, loadingStatuses, loadAllStatuses]);
 
   // Обработчики для фильтров
   const handleFilterSelect = (filterType: FilterType) => {
@@ -247,18 +293,17 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
       setDateFromInput(dateFrom);
       setDateToInput(dateTo);
     } else {
-      // Для текстовых фильтров
-      const currentValue = getFilterValue(filterType);
-      switch (filterType) {
-        case 'branch':
-          setBranchInput(currentValue);
-          break;
-        case 'status':
-          setStatusInput(currentValue);
-          break;
-        case 'complaint_type':
-          setComplaintTypeInput(currentValue);
-          break;
+      // Для текстовых фильтров (кроме статуса, который использует чипсы)
+      if (filterType !== 'status') {
+        const currentValue = getFilterValue(filterType);
+        switch (filterType) {
+          case 'branch':
+            setBranchInput(currentValue);
+            break;
+          case 'complaint_type':
+            setComplaintTypeInput(currentValue);
+            break;
+        }
       }
     }
   };
@@ -736,6 +781,35 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
                 >
                   <CheckLineIcon />
                 </button>
+              </div>
+            ) : activeFilterInput === 'status' ? (
+              // UI для фильтра статуса - список чипсов
+              <div className="flex flex-wrap items-center gap-2">
+                {loadingStatuses ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Загрузка статусов...</div>
+                ) : allStatuses.length === 0 ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Нет доступных статусов</div>
+                ) : (
+                  allStatuses.map((statusValue) => (
+                    <button
+                      key={statusValue}
+                      type="button"
+                      onClick={() => {
+                        setStatus(statusValue);
+                        setStatusInput('');
+                        setPage(1);
+                        setActiveFilterInput(null);
+                      }}
+                      className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        status === statusValue
+                          ? 'bg-brand-500 text-white hover:bg-brand-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {statusValue}
+                    </button>
+                  ))
+                )}
               </div>
             ) : (
               // UI для текстовых фильтров

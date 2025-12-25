@@ -22,6 +22,9 @@ export default function UsersList() {
   const [showPasswordField, setShowPasswordField] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [hoveredUserId, setHoveredUserId] = useState<string | null>(null);
+  
+  // Поиск по пользователям
+  const [searchInput, setSearchInput] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -222,6 +225,18 @@ export default function UsersList() {
   const isAllClientsSelected = filteredClients.length > 0 && 
     filteredClients.every(client => editForm.clientIds?.includes(client.id));
 
+  // Фильтрация пользователей по имени и email
+  const filteredUsers = React.useMemo(() => {
+    if (!searchInput.trim()) {
+      return users;
+    }
+    const searchLower = searchInput.toLowerCase();
+    return users.filter(user => 
+      (user.name && user.name.toLowerCase().includes(searchLower)) ||
+      (user.email && user.email.toLowerCase().includes(searchLower))
+    );
+  }, [users, searchInput]);
+
   if (loading) {
     return <div className="p-6 text-gray-600 dark:text-gray-400">Загрузка...</div>;
   }
@@ -233,12 +248,28 @@ export default function UsersList() {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
-          Список пользователей
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Всего пользователей: {users.length}
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+              Список пользователей
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Всего пользователей: {users.length}
+              {searchInput && ` | Найдено: ${filteredUsers.length}`}
+            </p>
+          </div>
+          
+          {/* Поиск */}
+          <div className="flex-1 max-w-md">
+            <Input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Поиск по имени или email..."
+              className="w-full"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -266,7 +297,26 @@ export default function UsersList() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-900">
-            {users.map((user, index) => (
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-8 text-center">
+                  <div className="text-gray-500 dark:text-gray-400">
+                    {searchInput ? 'Пользователи не найдены по вашему запросу' : 'Пользователи не найдены'}
+                  </div>
+                  {searchInput && (
+                    <Button 
+                      onClick={() => setSearchInput('')} 
+                      variant="outline"
+                      size="sm"
+                      className="mt-4"
+                    >
+                      Очистить поиск
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ) : (
+              filteredUsers.map((user, index) => (
               <tr key={user.id}>
                 <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                   {index + 1}
@@ -366,7 +416,8 @@ export default function UsersList() {
                   </div>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>
