@@ -26,10 +26,17 @@ export default function AnalyticsPageClient() {
   const [clientSearchQuery, setClientSearchQuery] = useState("");
 
   // Загрузка данных для ТС
-  const loadChartData = useCallback(async (clientTINs?: string[]) => {
+  const loadChartData = useCallback(async (clientTINs?: string[], skipAutoSelect = false) => {
     try {
       setLoading(true);
       setError(null);
+
+      // Если явно передан пустой массив клиентов (skipAutoSelect = true), очищаем данные
+      if (skipAutoSelect && (!clientTINs || clientTINs.length === 0)) {
+        setChartData([]);
+        setLoading(false);
+        return;
+      }
 
       const params: {
         clientTIN?: string;
@@ -45,10 +52,18 @@ export default function AnalyticsPageClient() {
       setAvailableClients(response.availableClients);
       setLastImportAt(response.lastImportAt);
 
-      // Если клиенты не выбраны, выбираем всех доступных клиентов по умолчанию
-      if (!clientTINs || clientTINs.length === 0) {
+      // Если клиенты не выбраны и не пропущена авто-выборка, выбираем всех доступных клиентов по умолчанию
+      if (!skipAutoSelect && (!clientTINs || clientTINs.length === 0)) {
         const allClientTINs = response.availableClients.map(c => c.TIN);
         setSelectedClientTINs(allClientTINs);
+        // Перезагружаем данные с выбранными клиентами
+        if (allClientTINs.length > 0) {
+          const paramsWithClients: { clientTIN?: string } = {
+            clientTIN: allClientTINs.join(',')
+          };
+          const responseWithClients = await analyticsService.getChartData(paramsWithClients);
+          setChartData(responseWithClients.data);
+        }
       } else if (clientTINs && clientTINs.length > 0) {
         // Обновляем выбранные клиенты, если они были переданы
         setSelectedClientTINs(clientTINs);
@@ -74,10 +89,17 @@ export default function AnalyticsPageClient() {
   }, []);
 
   // Загрузка данных для заказов
-  const loadOrdersChartData = useCallback(async (clientTINs?: string[]) => {
+  const loadOrdersChartData = useCallback(async (clientTINs?: string[], skipAutoSelect = false) => {
     try {
       setOrdersLoading(true);
       setOrdersError(null);
+
+      // Если явно передан пустой массив клиентов (skipAutoSelect = true), очищаем данные
+      if (skipAutoSelect && (!clientTINs || clientTINs.length === 0)) {
+        setOrdersChartData([]);
+        setOrdersLoading(false);
+        return;
+      }
 
       const params: {
         clientTIN?: string;
@@ -98,6 +120,24 @@ export default function AnalyticsPageClient() {
       
       setOrdersChartData(transformedData);
       setOrdersLastImportAt(response.lastImportAt);
+
+      // Если клиенты не выбраны и не пропущена авто-выборка, перезагружаем данные с выбранными клиентами
+      if (!skipAutoSelect && (!clientTINs || clientTINs.length === 0) && response.availableClients && response.availableClients.length > 0) {
+        const allClientTINs = response.availableClients.map(c => c.TIN);
+        // Перезагружаем данные с выбранными клиентами
+        if (allClientTINs.length > 0) {
+          const paramsWithClients: { clientTIN?: string } = {
+            clientTIN: allClientTINs.join(',')
+          };
+          const responseWithClients = await analyticsOrdersService.getChartData(paramsWithClients);
+          const transformedDataWithClients: IOrdersChartDataPoint[] = responseWithClients.data.map(item => ({
+            date: item.date,
+            quantityByPlannedDate: item.quantityByPlannedDate,
+            quantityByActualDate: item.quantityByActualDate,
+          }));
+          setOrdersChartData(transformedDataWithClients);
+        }
+      }
     } catch (err: unknown) {
       const isNetworkError = err && typeof err === 'object' && 'code' in err && 
         (err.code === 'ERR_NETWORK' || err.code === 'ERR_CONNECTION_REFUSED');
@@ -137,10 +177,14 @@ export default function AnalyticsPageClient() {
   const toggleClient = (clientTIN: string) => {
     setSelectedClientTINs(prev => {
       const isSelected = prev.includes(clientTIN);
+      const allSelected = availableClients.length > 0 && prev.length === availableClients.length;
       let newSelected: string[];
       
-      if (isSelected) {
-        // Если снимаем выбор, убираем клиента
+      // Если все клиенты выбраны и пользователь кликает на одного, выбираем только этого клиента
+      if (allSelected && isSelected) {
+        newSelected = [clientTIN];
+      } else if (isSelected) {
+        // Если снимаем выбор и не все выбраны, убираем клиента
         newSelected = prev.filter(tin => tin !== clientTIN);
       } else {
         // При добавлении нового клиента просто добавляем его
@@ -148,8 +192,10 @@ export default function AnalyticsPageClient() {
       }
       
       // Загружаем данные с новыми клиентами для обоих графиков
-      loadChartData(newSelected.length > 0 ? newSelected : undefined);
-      loadOrdersChartData(newSelected.length > 0 ? newSelected : undefined);
+      // Используем skipAutoSelect=true, чтобы не сбрасывать выбор после загрузки
+      // Передаем пустой массив явно, чтобы очистить данные при снятии выбора
+      loadChartData(newSelected.length > 0 ? newSelected : [], true);
+      loadOrdersChartData(newSelected.length > 0 ? newSelected : [], true);
       
       return newSelected;
     });
@@ -157,7 +203,7 @@ export default function AnalyticsPageClient() {
 
   // Выбор/снятие выбора всех клиентов
   const toggleAllClients = () => {
-    const allSelected = selectedClientTINs.length === availableClients.length;
+    const allSelected = availableClients.length > 0 && selectedClientTINs.length === availableClients.length;
     let newSelected: string[];
     
     if (allSelected) {
@@ -171,8 +217,10 @@ export default function AnalyticsPageClient() {
     setSelectedClientTINs(newSelected);
     
     // Загружаем данные с новыми клиентами для обоих графиков
-    loadChartData(newSelected.length > 0 ? newSelected : undefined);
-    loadOrdersChartData(newSelected.length > 0 ? newSelected : undefined);
+    // Используем skipAutoSelect=true, чтобы не сбрасывать выбор после загрузки
+    // Передаем пустой массив явно, чтобы очистить данные при снятии выбора
+    loadChartData(newSelected.length > 0 ? newSelected : [], true);
+    loadOrdersChartData(newSelected.length > 0 ? newSelected : [], true);
   };
 
   // Фильтрация клиентов по поисковому запросу
