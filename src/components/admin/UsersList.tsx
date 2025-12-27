@@ -7,6 +7,8 @@ import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
 import { Modal } from '@/components/ui/modal';
+import { Download } from 'lucide-react';
+import { exportToExcel } from '@/utils/excelExport';
 
 export default function UsersList() {
   const [users, setUsers] = useState<IUser[]>([]);
@@ -237,6 +239,36 @@ export default function UsersList() {
     );
   }, [users, searchInput]);
 
+  // Экспорт всех пользователей в Excel
+  const handleExportUsers = () => {
+    if (users.length === 0) {
+      alert('Нет данных для экспорта');
+      return;
+    }
+
+    // Подготовка данных для экспорта
+    const exportData = users.map((user, index) => ({
+      '#': index + 1,
+      'Email': user.email,
+      'Имя': user.name || '-',
+      'Роль': user.role === 'ADMIN' ? 'Администратор' : 'Пользователь',
+      'Клиенты': user.clients && user.clients.length > 0 
+        ? user.clients.map(c => c.companyName).join(', ') 
+        : '-',
+    }));
+
+    // Заголовки колонок
+    const headers = {
+      '#': '#',
+      'Email': 'Email',
+      'Имя': 'Имя',
+      'Роль': 'Роль',
+      'Клиенты': 'Клиенты',
+    };
+
+    exportToExcel(exportData, `Пользователи_${new Date().toISOString().split('T')[0]}`, headers);
+  };
+
   if (loading) {
     return <div className="p-6 text-gray-600 dark:text-gray-400">Загрузка...</div>;
   }
@@ -259,15 +291,26 @@ export default function UsersList() {
             </p>
           </div>
           
-          {/* Поиск */}
-          <div className="flex-1 max-w-md">
-            <Input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Поиск по имени или email..."
-              className="w-full"
-            />
+          {/* Поиск и экспорт */}
+          <div className="flex items-center gap-3 flex-1 max-w-md">
+            <div className="flex-1">
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Поиск по имени или email..."
+                className="w-full"
+              />
+            </div>
+            <button
+              onClick={handleExportUsers}
+              disabled={users.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              title="Экспорт всех пользователей в Excel"
+            >
+              <Download className="w-4 h-4" />
+              Экспорт
+            </button>
           </div>
         </div>
       </div>

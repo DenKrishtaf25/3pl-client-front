@@ -7,6 +7,8 @@ import { Modal } from '@/components/ui/modal';
 import Input from '@/components/form/input/InputField';
 import Label from '@/components/form/Label';
 import Pagination from '@/components/tables/Pagination';
+import { Download } from 'lucide-react';
+import { exportToExcel } from '@/utils/excelExport';
 
 export default function ClientsList() {
   const [clients, setClients] = useState<IClient[]>([]);
@@ -194,6 +196,38 @@ export default function ClientsList() {
     setPage(1);
   };
 
+  // Экспорт всех загруженных клиентов в Excel
+  const handleExportClients = () => {
+    if (clients.length === 0) {
+      alert('Нет данных для экспорта');
+      return;
+    }
+
+    // Подготовка данных для экспорта
+    const exportData = clients.map((client, index) => ({
+      '#': index + 1,
+      'Название компании': client.companyName,
+      'ИНН': client.TIN,
+      'Дата создания': new Date(client.createdAt).toLocaleDateString('ru-RU', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+    }));
+
+    // Заголовки колонок
+    const headers = {
+      '#': '#',
+      'Название компании': 'Название компании',
+      'ИНН': 'ИНН',
+      'Дата создания': 'Дата создания',
+    };
+
+    exportToExcel(exportData, `Клиенты_${new Date().toISOString().split('T')[0]}`, headers);
+  };
+
   if (loading && !meta) {
     return (
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
@@ -220,15 +254,26 @@ export default function ClientsList() {
             )}
           </div>
           
-          {/* Поиск */}
-          <div className="flex-1 max-w-md">
-            <Input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Поиск по названию компании или ИНН..."
-              className="w-full"
-            />
+          {/* Поиск и экспорт */}
+          <div className="flex items-center gap-3 flex-1 max-w-md">
+            <div className="flex-1">
+              <Input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Поиск по названию компании или ИНН..."
+                className="w-full"
+              />
+            </div>
+            <button
+              onClick={handleExportClients}
+              disabled={clients.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+              title="Экспорт всех загруженных клиентов в Excel"
+            >
+              <Download className="w-4 h-4" />
+              Экспорт
+            </button>
           </div>
         </div>
 

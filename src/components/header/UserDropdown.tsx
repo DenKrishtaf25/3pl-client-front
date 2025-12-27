@@ -32,7 +32,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     await logout();
   };
   return (
-    <div className="relative">
+    <div className="relative z-99999">
       <button
         onClick={toggleDropdown} 
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"

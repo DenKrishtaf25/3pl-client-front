@@ -102,7 +102,7 @@ export default function RussianLicensePlate({ plateNumber, className = "" }: Rus
       >
         {/* Основная часть номера (буква, цифры, буквы) */}
         <div className="flex items-center justify-center h-full flex-1">
-          <div className="flex items-end gap-0.5">
+          <div className="flex items-end gap-0.2">
             {mainChars.map((item, index) => (
               <span
                 key={index}

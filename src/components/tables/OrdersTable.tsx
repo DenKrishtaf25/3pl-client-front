@@ -734,7 +734,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
         'Статус': capitalizeStatus(order.status),
         'Контрагент': order.counterparty,
         'Плановая дата отгрузки': formatDateTime(order.shipmentDate),
-        'Дата приемки': formatDateTime(order.acceptanceDate),
+        'Дата фактической приемки/отгрузки': formatDateTime(order.acceptanceDate),
         'Упаковок план': order.packagesPlanned,
         'Упаковок факт': order.packagesActual,
         'Строк план': order.linesPlanned,
@@ -780,7 +780,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
       case 'kisNumber':
         return '№ КИС';
       case 'acceptanceDate':
-        return 'Дата приемки';
+        return 'Дата фактической приемки/отгрузки';
       case 'exportDate':
         return 'Дата погрузки заказа в WMS';
       case 'shipmentDate':
@@ -909,7 +909,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                       onItemClick={() => handleFilterSelect('acceptanceDate')}
                       className="flex w-full font-normal text-left text-gray-700 rounded-lg hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-200"
                     >
-                      Дата приемки
+                      Дата фактической приемки/отгрузки
                     </DropdownItem>
                   )}
                   {!hasFilter('exportDate') && activeFilterInput !== 'exportDate' && (
@@ -1368,7 +1368,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
               onClick={() => handleEditFilter('acceptanceDate')}
             >
               <span>
-                Дата приемки: {acceptanceDateFrom && formatDateForChip(acceptanceDateFrom, true)}
+                Дата фактической приемки/отгрузки: {acceptanceDateFrom && formatDateForChip(acceptanceDateFrom, true)}
                 {acceptanceDateFrom && acceptanceDateTo && ' — '}
                 {acceptanceDateTo && formatDateForChip(acceptanceDateTo, true)}
               </span>
@@ -1536,7 +1536,7 @@ export default function OrdersTable({ onExportReady }: OrdersTableProps = {}) {
                     onClick={() => handleSort('acceptanceDate')}
                     className="flex items-center gap-2 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
-                    Дата приемки
+                    Дата фактической приемки/отгрузки
                     {sortBy === 'acceptanceDate' && (
                       <span className="text-brand-500">
                         {sortOrder === 'asc' ? '↑' : '↓'}

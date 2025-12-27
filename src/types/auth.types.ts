@@ -126,8 +126,8 @@ export interface IOrderQueryParams {
     sortBy?: 'orderNumber' | 'acceptanceDate' | 'exportDate' | 'shipmentDate'
     sortOrder?: 'asc' | 'desc'
     clientTIN?: string // Может быть несколько через запятую: "123,456"
-    acceptanceDateFrom?: string // Дата приемки с (ISO format: YYYY-MM-DD)
-    acceptanceDateTo?: string // Дата приемки до (ISO format: YYYY-MM-DD)
+    acceptanceDateFrom?: string // Дата фактической приемки/отгрузки с (ISO format: YYYY-MM-DD)
+    acceptanceDateTo?: string // Дата фактической приемки/отгрузки до (ISO format: YYYY-MM-DD)
     exportDateFrom?: string // Дата выгрузки с (ISO format: YYYY-MM-DD)
     exportDateTo?: string // Дата выгрузки до (ISO format: YYYY-MM-DD)
     shipmentDateFrom?: string // Дата отгрузки с (ISO format: YYYY-MM-DD или YYYY-MM-DDTHH:mm:ss)
