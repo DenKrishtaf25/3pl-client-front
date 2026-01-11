@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./RegistryTableDatePicker.css";
@@ -27,6 +28,7 @@ interface ComplaintsTableProps {
 }
 
 export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps = {}) {
+  const searchParams = useSearchParams();
   const [complaints, setComplaints] = useState<IComplaint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,14 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
   const [status, setStatus] = useState('');
   const [complaint_type, setComplaintType] = useState('');
   const [confirmation, setConfirmation] = useState<boolean | null>(null);
+  
+  // Чтение параметра complaintType из URL при монтировании
+  useEffect(() => {
+    const complaintTypeParam = searchParams?.get('complaintType');
+    if (complaintTypeParam) {
+      setComplaintType(complaintTypeParam);
+    }
+  }, [searchParams]);
   
   // Фильтры по датам (применённые значения)
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
@@ -67,6 +77,10 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
   // Состояние для хранения всех уникальных статусов
   const [allStatuses, setAllStatuses] = useState<string[]>([]);
   const [loadingStatuses, setLoadingStatuses] = useState(false);
+  
+  // Состояние для хранения всех уникальных типов претензий
+  const [allTypes, setAllTypes] = useState<string[]>([]);
+  const [loadingTypes, setLoadingTypes] = useState(false);
 
   // Функция для форматирования даты в ISO формат
   const formatDateToISO = (date: Date | null): string | undefined => {
@@ -178,12 +192,54 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
     }
   }, []);
 
+  // Функция для загрузки всех уникальных типов претензий
+  const loadAllTypes = useCallback(async () => {
+    try {
+      setLoadingTypes(true);
+      
+      // Загружаем все данные с большим лимитом для получения всех типов
+      const requestParams: IComplaintQueryParams = {
+        page: 1,
+        limit: 10000, // Большой лимит для получения всех данных
+      };
+      
+      const response = await complaintsService.getPaginated(requestParams);
+      
+      // Извлекаем уникальные типы претензий
+      const allComplaints = response && 'data' in response && Array.isArray(response.data) 
+        ? response.data 
+        : [];
+      
+      const uniqueTypes = Array.from(
+        new Set(
+          allComplaints
+            .map(item => item.complaintType)
+            .filter((type): type is string => Boolean(type))
+        )
+      ).sort();
+      
+      setAllTypes(uniqueTypes);
+    } catch (err) {
+      console.error('Failed to load types:', err);
+      setAllTypes([]);
+    } finally {
+      setLoadingTypes(false);
+    }
+  }, []);
+
   // Загружаем статусы при открытии фильтра статуса
   useEffect(() => {
     if (activeFilterInput === 'status' && allStatuses.length === 0 && !loadingStatuses) {
       loadAllStatuses();
     }
   }, [activeFilterInput, allStatuses.length, loadingStatuses, loadAllStatuses]);
+
+  // Загружаем типы при открытии фильтра типа претензии
+  useEffect(() => {
+    if (activeFilterInput === 'complaint_type' && allTypes.length === 0 && !loadingTypes) {
+      loadAllTypes();
+    }
+  }, [activeFilterInput, allTypes.length, loadingTypes, loadAllTypes]);
 
   // Обработчики для фильтров
   const handleFilterSelect = (filterType: FilterType) => {
@@ -293,15 +349,12 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
       setDateFromInput(dateFrom);
       setDateToInput(dateTo);
     } else {
-      // Для текстовых фильтров (кроме статуса, который использует чипсы)
-      if (filterType !== 'status') {
+      // Для текстовых фильтров (кроме статуса и типа претензии, которые используют чипсы)
+      if (filterType !== 'status' && filterType !== 'complaint_type') {
         const currentValue = getFilterValue(filterType);
         switch (filterType) {
           case 'branch':
             setBranchInput(currentValue);
-            break;
-          case 'complaint_type':
-            setComplaintTypeInput(currentValue);
             break;
         }
       }
@@ -813,6 +866,35 @@ export default function ComplaintsTable({ onExportReady }: ComplaintsTableProps 
                       }`}
                     >
                       {capitalizeStatus(statusValue)}
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : activeFilterInput === 'complaint_type' ? (
+              // UI для фильтра типа претензии - список чипсов
+              <div className="flex flex-wrap items-center gap-2">
+                {loadingTypes ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Загрузка типов претензий...</div>
+                ) : allTypes.length === 0 ? (
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Нет доступных типов претензий</div>
+                ) : (
+                  allTypes.map((typeValue) => (
+                    <button
+                      key={typeValue}
+                      type="button"
+                      onClick={() => {
+                        setComplaintType(typeValue);
+                        setComplaintTypeInput('');
+                        setPage(1);
+                        setActiveFilterInput(null);
+                      }}
+                      className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                        complaint_type === typeValue
+                          ? 'bg-brand-500 text-white hover:bg-brand-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {typeValue}
                     </button>
                   ))
                 )}

@@ -78,7 +78,7 @@ class ComplaintsService {
         queryParams.append('dateTo', params.dateTo);
       }
       if (params?.complaint_type) {
-        queryParams.append('complaint_type', params.complaint_type);
+        queryParams.append('complaintType', params.complaint_type);
       }
       if (params?.confirmation !== undefined) {
         queryParams.append('confirmation', params.confirmation.toString());

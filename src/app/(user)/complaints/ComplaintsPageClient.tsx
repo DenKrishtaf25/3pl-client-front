@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComplaintsTable from "@/components/tables/ComplaintsTable";
@@ -167,7 +167,16 @@ export default function ComplaintsPageClient() {
             </div>
           }
         >
-          <ComplaintsTable key={refreshKeyRef.current} onExportReady={handleExportReady} />
+          <Suspense fallback={
+            <div className="flex items-center justify-center py-8">
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+                <span className="text-gray-600 dark:text-gray-400 text-sm">Загрузка...</span>
+              </div>
+            </div>
+          }>
+            <ComplaintsTable key={refreshKeyRef.current} onExportReady={handleExportReady} />
+          </Suspense>
         </ComponentCard>
       </div>
     </div>
