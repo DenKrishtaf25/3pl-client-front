@@ -34,6 +34,11 @@ export interface IComplaintStatusStat {
   unconfirmedCount: number;
 }
 
+export interface IComplaintTypeStat {
+  type: string;
+  count: number;
+}
+
 class ComplaintsService {
   private BASE_URL = '/complaints';
 
@@ -142,6 +147,28 @@ class ComplaintsService {
       
       if (!isNetworkError) {
         console.error('Failed to fetch status stats:', error);
+      }
+      
+      throw error;
+    }
+  }
+
+  /**
+   * Получает статистику по типам претензий
+   */
+  async getTypeStats(): Promise<IComplaintTypeStat[]> {
+    try {
+      const response = await axiosWithAuth.get<IComplaintTypeStat[]>(`${this.BASE_URL}/stats/type`);
+      return response.data;
+    } catch (error: unknown) {
+      // Проверяем различные форматы ошибок Axios
+      const isNetworkError = error && typeof error === 'object' && 
+        (('code' in error && (error.code === 'ERR_NETWORK' || error.code === 'ERR_CONNECTION_REFUSED')) ||
+         ('message' in error && typeof error.message === 'string' && 
+          (error.message.includes('Network Error') || error.message.includes('ERR_CONNECTION_REFUSED'))));
+      
+      if (!isNetworkError) {
+        console.error('Failed to fetch type stats:', error);
       }
       
       throw error;

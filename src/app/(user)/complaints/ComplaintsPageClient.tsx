@@ -4,6 +4,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import ComplaintsTable from "@/components/tables/ComplaintsTable";
 import ComplaintsStatusStatsTable from "@/components/tables/ComplaintsStatusStatsTable";
+import ComplaintsTypeStatsTable from "@/components/tables/ComplaintsTypeStatsTable";
 import { Download, RotateCw } from "lucide-react";
 import { complaintsService } from "@/services/complaints.service";
 
@@ -127,6 +128,9 @@ export default function ComplaintsPageClient() {
       <div className="space-y-6">
         <ComponentCard title="Статистика по статусам">
           <ComplaintsStatusStatsTable />
+        </ComponentCard>
+        <ComponentCard title="Статистика по типу претензии">
+          <ComplaintsTypeStatsTable />
         </ComponentCard>
         <ComponentCard 
           title="Данные рекламаций"
