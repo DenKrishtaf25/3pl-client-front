@@ -1,4 +1,4 @@
-import { IUser } from '@/types/auth.types';
+import { IUser, IUserUpdate } from '@/types/auth.types';
 import { axiosWithAuth } from '../api/interceptors';
 
 interface IProfileResponse {
@@ -13,7 +13,7 @@ class UserService {
     return response.data.user;
   }
 
-  async updateProfile(data: Partial<IUser>) {
+  async updateProfile(data: Partial<IUser> | IUserUpdate) {
     const response = await axiosWithAuth.put<IProfileResponse>(`${this.BASE_URL}/profile`, data);
     return response.data.user;
   }
