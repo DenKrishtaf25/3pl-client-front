@@ -130,12 +130,15 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
       }
       
       // Отправляем TIN вместо ID клиентов
+      // Добавляем флаг sendEmail, чтобы бэкенд автоматически отправил письмо с учетными данными
       const dataToSend = {
         ...formData,
-        TINs: selectedClients.map(client => client.TIN)
+        TINs: selectedClients.map(client => client.TIN),
+        sendEmail: true // Указываем бэкенду отправить email с логином и паролем
       };
       
       await adminUserService.create(dataToSend);
+      
       setSuccess(true);
       setFormData({
         email: '',

@@ -33,6 +33,7 @@ export interface IUserCreate {
     role?: 'USER' | 'ADMIN'
     clientIds?: string[]
     TINs?: string[] // TIN для отправки на сервер
+    sendEmail?: boolean // Флаг для отправки email с учетными данными
 }
 
 export interface IUserUpdate {

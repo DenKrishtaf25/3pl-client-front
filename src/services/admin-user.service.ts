@@ -11,8 +11,9 @@ class AdminUserService {
 
   async create(data: IUserCreate) {
     try {
-      console.log('Creating user with data:', data)
+      console.log('Creating user with data:', JSON.stringify(data, null, 2))
       console.log('API URL:', this.BASE_URL)
+      console.log('sendEmail flag:', data.sendEmail)
       const response = await axiosWithAuth.post<IUser>(this.BASE_URL, data)
       console.log('User created successfully:', response.data)
       return response.data
