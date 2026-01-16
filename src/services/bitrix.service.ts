@@ -118,6 +118,55 @@ class BitrixService {
   }
 
   /**
+   * Создает финансовую претензию в Битрикс24 как задачу
+   */
+  async createFinancialComplaint(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    position: string;
+    description: string;
+  }) {
+    try {
+      // Подготавливаем данные для Битрикс24 (задача)
+      const bitrixData = {
+        fields: {
+          TITLE: `Финансовая претензия - ${data.firstName} ${data.lastName}`,
+          DESCRIPTION: this.formatComplaintDescription(data),
+          RESPONSIBLE_ID: 11,
+          CREATED_BY: 668,
+          GROUP_ID: 115 // Группа для задач претензий
+        }
+      };
+
+      const response = await fetch(`${this.BASE_URL}/tasks.task.add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bitrixData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Bitrix24 API error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(`Bitrix24 error: ${result.error_description || result.error}`);
+      }
+
+      return result.result;
+    } catch (error: unknown) {
+      console.error('Failed to create financial complaint in Bitrix24:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      throw new Error(`Ошибка при создании претензии в Битрикс24: ${errorMessage}`);
+    }
+  }
+
+  /**
    * Форматирует описание заявки для Битрикс24
    */
   private formatDescription(data: IInventoryRequest): string {
@@ -135,6 +184,34 @@ class BitrixService {
 Email: ${data.email}
 
 ${data.comment ? `Комментарий: ${data.comment}` : ''}
+
+Создано через веб-интерфейс ПЭК 3PL
+    `.trim();
+  }
+
+  /**
+   * Форматирует описание финансовой претензии для Битрикс24
+   */
+  private formatComplaintDescription(data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    position: string;
+    description: string;
+  }): string {
+    return `
+Финансовая претензия
+
+Данные отправителя:
+Имя: ${data.firstName}
+Фамилия: ${data.lastName}
+Должность: ${data.position}
+Почта: ${data.email}
+Телефон: ${data.phone}
+
+Описание претензии:
+${data.description}
 
 Создано через веб-интерфейс ПЭК 3PL
     `.trim();
