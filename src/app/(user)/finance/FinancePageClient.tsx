@@ -4,7 +4,7 @@ import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
 import FinanceTable from "@/components/tables/FinanceTable";
 import StatusStatsTable from "@/components/tables/StatusStatsTable";
-import { Download, RotateCw, Plus } from "lucide-react";
+import { Download, RotateCw, Plus, Paperclip, X } from "lucide-react";
 import { financeService } from "@/services/finance.service";
 import { Modal } from "@/components/ui/modal";
 import Input from "@/components/form/input/InputField";
@@ -40,6 +40,8 @@ export default function FinancePageClient() {
     position: "",
     description: ""
   });
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Обновляем email при изменении user
   useEffect(() => {
@@ -159,8 +161,28 @@ export default function FinancePageClient() {
       position: "",
       description: ""
     });
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     setEmailError(null);
     setEmailSuccess(false);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0] || null;
+    setFile(selectedFile);
+  };
+
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleCreateComplaint = async () => {
@@ -185,7 +207,7 @@ export default function FinancePageClient() {
         return;
       }
 
-      await emailService.sendFinancialComplaint(complaintData);
+      await emailService.sendFinancialComplaint(complaintData, file ?? undefined);
       setEmailSuccess(true);
       
       // Скрыть сообщение об успехе через 5 секунд
@@ -297,13 +319,46 @@ export default function FinancePageClient() {
                     />
                   </div>
                   <div className="col-span-2">
-                    <Label>Опишите вашу претензию</Label>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Опишите вашу претензию</Label>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleFileButtonClick}
+                        startIcon={<Paperclip size={16} />}
+                        type="button"
+                      >
+                        Прикрепить файл
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        accept="*/*"
+                      />
+                    </div>
                     <textarea
                       value={complaintData.description}
                       onChange={(e) => setComplaintData({ ...complaintData, description: e.target.value })}
                       className="w-full min-h-[120px] px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-y"
                       placeholder="Введите описание претензии..."
                     />
+                    {file && (
+                      <div className="flex items-center gap-2 mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <Paperclip size={16} className="text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 flex-1 truncate">
+                          {file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveFile}
+                          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

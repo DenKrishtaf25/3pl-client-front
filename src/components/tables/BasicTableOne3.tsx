@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Modal } from "../../components/ui/modal";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
@@ -7,6 +7,7 @@ import Button from "../../components/ui/button/Button";
 import TextAreaInput from "@/components/form/form-elements/TextAreaInput";
 import { useModal } from "../../hooks/useModal";
 import { Plus } from "lucide-react";
+import { bitrixService } from "../../services/bitrix.service";
 
 import {
   Table,
@@ -59,8 +60,46 @@ const tableData: Order[] = [
 export default function BasicTableOne() {
 
   const { isOpen, openModal, closeModal } = useModal();
-  const handleSave = () => {
-    closeModal();
+  const [formData, setFormData] = useState({
+    firstName: "Марина",
+    lastName: "Медведь",
+    email: "randomuser@pimjo.com",
+    phone: "+7 363 398 46 23",
+    position: "Team Manager",
+    description: "",
+  });
+  const [file, setFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = async () => {
+    setIsSubmitting(true);
+    try {
+      await bitrixService.createFinancialComplaint({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        position: formData.position,
+        description: formData.description,
+        file: file || undefined,
+      });
+      closeModal();
+      // Сброс формы
+      setFormData({
+        firstName: "Марина",
+        lastName: "Медведь",
+        email: "randomuser@pimjo.com",
+        phone: "+7 363 398 46 23",
+        position: "Team Manager",
+        description: "",
+      });
+      setFile(null);
+    } catch (error) {
+      console.error("Ошибка при отправке претензии:", error);
+      alert("Ошибка при отправке претензии. Попробуйте еще раз.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -91,40 +130,65 @@ export default function BasicTableOne() {
                 <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Имя</Label>
-                    <Input type="text" defaultValue="Марина" />
+                    <Input 
+                      type="text" 
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Фамилия</Label>
-                    <Input type="text" defaultValue="Медведь" />
+                    <Input 
+                      type="text" 
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Почта</Label>
-                    <Input type="text" defaultValue="randomuser@pimjo.com" />
+                    <Input 
+                      type="text" 
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
                   </div>
 
                   <div className="col-span-2 lg:col-span-1">
                     <Label>Телефон</Label>
-                    <Input type="text" defaultValue="+7 363 398 46 23" />
+                    <Input 
+                      type="text" 
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    />
                   </div>
 
                   <div className="col-span-2">
                     <Label>Должность</Label>
-                    <Input type="text" defaultValue="Team Manager" />
+                    <Input 
+                      type="text" 
+                      value={formData.position}
+                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    />
                   </div>
                   <div className="col-span-2">
-                    <TextAreaInput />
+                    <TextAreaInput 
+                      value={formData.description}
+                      onChange={(value) => setFormData({ ...formData, description: value })}
+                      file={file}
+                      onFileChange={setFile}
+                    />
                   </div>
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-              <Button size="sm" variant="outline" onClick={closeModal}>
+              <Button size="sm" variant="outline" onClick={closeModal} disabled={isSubmitting}>
                 Закрыть
               </Button>
-              <Button size="sm" onClick={handleSave}>
-                Отпраить
+              <Button size="sm" onClick={handleSave} disabled={isSubmitting}>
+                {isSubmitting ? "Отправка..." : "Отправить"}
               </Button>
             </div>
           </form>
