@@ -15,7 +15,7 @@ class EmailService {
    */
   async sendFinancialComplaint(data: IComplaintEmailData, file?: File) {
     try {
-      const recipientEmail = process.env.NEXT_PUBLIC_COMPLAINT_EMAIL || 'dkrishtaf@mail.ru';
+      const recipientEmail = process.env.NEXT_PUBLIC_COMPLAINT_EMAIL || 'claims-3pl@pecom.ru';
       
       // Если есть файл, отправляем через FormData
       if (file) {
