@@ -1,0 +1,272 @@
+.documentation-content {
+  color: #1d2939;
+}
+
+.documentation-content h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #101828;
+  border-bottom: 3px solid #465fff;
+  padding-bottom: 1rem;
+}
+
+.documentation-content h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  color: #101828;
+  padding-top: 1rem;
+  border-top: 1px solid #e4e7ec;
+  scroll-margin-top: 80px; /* Для якорей */
+}
+
+.documentation-content h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  color: #344054;
+  scroll-margin-top: 80px;
+}
+
+.documentation-content h4 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: #475467;
+}
+
+.documentation-content p {
+  margin-bottom: 1rem;
+  color: #475467;
+  line-height: 1.6;
+}
+
+.documentation-content ul,
+.documentation-content ol {
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+.documentation-content li {
+  margin-bottom: 0.5rem;
+  color: #475467;
+}
+
+.documentation-content code {
+  background-color: #f2f4f7;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #c4320a;
+}
+
+.documentation-content pre {
+  background-color: #1d2939;
+  color: #f9fafb;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.documentation-content pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.documentation-content .api-endpoint {
+  background-color: #f9fafb;
+  border-left: 4px solid #465fff;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.documentation-content .method {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-right: 0.5rem;
+}
+
+.documentation-content .method.get {
+  background-color: #12b76a;
+  color: white;
+}
+
+.documentation-content .method.post {
+  background-color: #0ba5ec;
+  color: white;
+}
+
+.documentation-content .method.put {
+  background-color: #fb6514;
+  color: white;
+}
+
+.documentation-content .method.delete {
+  background-color: #f04438;
+  color: white;
+}
+
+.documentation-content .endpoint-path {
+  font-family: 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #101828;
+}
+
+.documentation-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5rem;
+}
+
+.documentation-content th,
+.documentation-content td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e4e7ec;
+}
+
+.documentation-content th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #344054;
+}
+
+.documentation-content tr:hover {
+  background-color: #f9fafb;
+}
+
+.documentation-content .toc {
+  background-color: #f9fafb;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.documentation-content .toc h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.documentation-content .toc ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.documentation-content .toc li {
+  margin-bottom: 0.5rem;
+}
+
+.documentation-content .toc ul ul {
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.documentation-content .toc a {
+  color: #465fff;
+  text-decoration: none;
+}
+
+.documentation-content .toc a:hover {
+  text-decoration: underline;
+}
+
+.documentation-content .info-box {
+  background-color: #ecf3ff;
+  border-left: 4px solid #465fff;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.documentation-content .warning-box {
+  background-color: #fff6ed;
+  border-left: 4px solid #fb6514;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.documentation-content .success-box {
+  background-color: #ecfdf3;
+  border-left: 4px solid #12b76a;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
+.documentation-content a {
+  color: #465fff;
+  text-decoration: none;
+}
+
+.documentation-content a:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode support */
+.dark .documentation-content {
+  color: #f9fafb;
+}
+
+.dark .documentation-content h1,
+.dark .documentation-content h2 {
+  color: #f9fafb;
+  border-color: #465fff;
+}
+
+.dark .documentation-content h3 {
+  color: #e4e7ec;
+}
+
+.dark .documentation-content h4 {
+  color: #d0d5dd;
+}
+
+.dark .documentation-content p,
+.dark .documentation-content li {
+  color: #d0d5dd;
+}
+
+.dark .documentation-content code {
+  background-color: #344054;
+  color: #feb273;
+}
+
+.dark .documentation-content .api-endpoint {
+  background-color: #1d2939;
+  border-color: #465fff;
+}
+
+.dark .documentation-content .toc {
+  background-color: #1d2939;
+  border-color: #344054;
+}
+
+.dark .documentation-content table th {
+  background-color: #1d2939;
+  color: #f9fafb;
+}
+
+.dark .documentation-content table td {
+  border-color: #344054;
+}
+
+.dark .documentation-content tr:hover {
+  background-color: #1d2939;
+}
+

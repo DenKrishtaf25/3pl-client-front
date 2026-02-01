@@ -129,6 +129,11 @@ const adminItems: NavItem[] = [
     name: "Клиенты",
     path: "/admin/clients",
   },
+  {
+    icon: <FileText strokeWidth={1.5} />,
+    name: "Документация",
+    path: "/admin/documentation",
+  },
 ];
 
 const AppSidebar: React.FC = () => {
