@@ -133,7 +133,7 @@ export default function DocumentationContent() {
             id: "string",
             email: "string",
             name: "string",
-            role: "USER" | "ADMIN"
+            role: "USER | ADMIN"
           }
         }, null, 2)}</code></pre>
         <p className="warning-box">
@@ -155,7 +155,7 @@ export default function DocumentationContent() {
             id: "string",
             email: "string",
             name: "string",
-            role: "USER" | "ADMIN"
+            role: "USER | ADMIN"
           }
         }, null, 2)}</code></pre>
       </div>
@@ -498,7 +498,7 @@ export default function DocumentationContent() {
             <tr>
               <td><code>clientTIN</code></td>
               <td>string</td>
-              <td>ИНН клиента или несколько через запятую (например: "7702785539,1234567890")</td>
+              <td>ИНН клиента или несколько через запятую (например: &quot;7702785539,1234567890&quot;)</td>
             </tr>
           </tbody>
         </table>
