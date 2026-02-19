@@ -4,8 +4,8 @@ interface BitrixTaskData {
   fields: {
     TITLE: string;
     DESCRIPTION: string;
-    RESPONSIBLE_ID: number;
-    CREATED_BY: number;
+    RESPONSIBLE_ID?: number;
+    CREATED_BY?: number;
     GROUP_ID: number;
     UF_TASK_WEBDAV_FILES?: number[];
   };
@@ -289,6 +289,77 @@ ${data.comment ? `Комментарий: ${data.comment}` : ''}
 
 Описание претензии:
 ${data.description}
+
+Создано через веб-интерфейс ПЭК 3PL
+    `.trim();
+  }
+
+  /**
+   * Создает задачу в Битрикс24 с данными для отправки письма новому пользователю
+   */
+  async createUserCreationTask(data: {
+    email: string;
+    name: string;
+    login: string;
+    password: string;
+  }) {
+    try {
+      // Форматируем описание с данными пользователя
+      const description = this.formatUserCreationDescription(data);
+
+      // Подготавливаем данные для Битрикс24 (задача)
+      const bitrixData: BitrixTaskData = {
+        fields: {
+          TITLE: `Создание пользователя - ${data.name || data.email}`,
+          DESCRIPTION: description,
+          RESPONSIBLE_ID: 668,
+          CREATED_BY: 668,
+          GROUP_ID: 196 // Группа для задач создания пользователей
+        }
+      };
+
+      const response = await fetch(`${this.BASE_URL}/tasks.task.add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bitrixData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Bitrix24 API error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(`Bitrix24 error: ${result.error_description || result.error}`);
+      }
+
+      return result.result;
+    } catch (error: unknown) {
+      console.error('Failed to create user creation task in Bitrix24:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      throw new Error(`Ошибка при создании задачи в Битрикс24: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Форматирует описание задачи создания пользователя для Битрикс24
+   */
+  private formatUserCreationDescription(data: {
+    email: string;
+    name: string;
+    login: string;
+    password: string;
+  }): string {
+    return `
+Данные для отправки письма новому пользователю
+
+${data.email}
+${data.name}
+${data.login}
+${data.password}
 
 Создано через веб-интерфейс ПЭК 3PL
     `.trim();

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminUserService } from '@/services/admin-user.service';
 import { adminClientService } from '@/services/admin-client.service';
+import { bitrixService } from '@/services/bitrix.service';
 import { IUserCreate, IClient } from '@/types/auth.types';
 import Button from '@/components/ui/button/Button';
 import Input from '@/components/form/input/InputField';
@@ -130,14 +131,25 @@ export default function CreateUserForm({ onUserCreated }: CreateUserFormProps) {
       }
       
       // Отправляем TIN вместо ID клиентов
-      // Добавляем флаг sendEmail, чтобы бэкенд автоматически отправил письмо с учетными данными
       const dataToSend = {
         ...formData,
-        TINs: selectedClients.map(client => client.TIN),
-        sendEmail: true // Указываем бэкенду отправить email с логином и паролем
+        TINs: selectedClients.map(client => client.TIN)
       };
       
       await adminUserService.create(dataToSend);
+      
+      // Отправляем данные в задачу Bitrix для формирования письма
+      try {
+        await bitrixService.createUserCreationTask({
+          email: formData.email,
+          name: formData.name || '',
+          login: formData.email, // Логин равен email
+          password: formData.password
+        });
+      } catch (bitrixError) {
+        // Логируем ошибку, но не прерываем процесс создания пользователя
+        console.error('Failed to create Bitrix task for user creation:', bitrixError);
+      }
       
       setSuccess(true);
       setFormData({

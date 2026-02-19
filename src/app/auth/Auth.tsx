@@ -19,15 +19,6 @@ export default function Auth() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [minLoadTimePassed, setMinLoadTimePassed] = useState(false);
-  const [snowflakes, setSnowflakes] = useState<Array<{
-    id: number;
-    left: string;
-    animationDuration: string;
-    animationDelay: string;
-    fontSize: string;
-    drift: string;
-    angle: number;
-  }>>([]);
 
   useEffect(() => {
     // Минимальное время показа прелоадера для плавности (300ms)
@@ -55,29 +46,6 @@ export default function Auth() {
       return () => clearTimeout(timer);
     }
   }, [logoLoaded, minLoadTimePassed]);
-
-  // Generate snowflakes only on client side to avoid hydration mismatch
-  useEffect(() => {
-    const generatedSnowflakes = Array.from({ length: 100 }, (_, i) => {
-      const duration = Math.random() * 50 + 35; // 35-85 seconds
-      // Distribute delays more evenly for continuous flow
-      // Use negative delays for some snowflakes to start immediately
-      const baseDelay = (i * (duration / 100)) % duration;
-      const randomOffset = Math.random() * 2; // Small random offset
-      // Use negative delays for first 30% of snowflakes to start immediately
-      const delay = i < 30 ? -(Math.random() * duration * 0.3) : baseDelay + randomOffset;
-      return {
-        id: i,
-        left: `${Math.random() * 100}%`,
-        animationDuration: `${duration}s`,
-        animationDelay: `${delay}s`,
-        fontSize: `${Math.random() * 10 + 10}px`, // 10-20px
-        drift: `${(Math.random() - 0.5) * 100}px`, // Horizontal drift
-        angle: Math.random() < 0.5 ? -25 : 25, // -25 or +25 degrees
-      };
-    });
-    setSnowflakes(generatedSnowflakes);
-  }, []);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,129 +117,6 @@ export default function Auth() {
   }
 
   return (
-    <>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @keyframes snowfall-movement {
-            0% {
-              transform: translateY(-100vh) translateX(0) rotate(0deg);
-            }
-            100% {
-              transform: translateY(100vh) translateX(calc(var(--snow-drift, 0px) + var(--snow-angle-offset, 0px))) rotate(360deg);
-            }
-          }
-          @keyframes snowfall-opacity {
-            0% {
-              opacity: 0;
-            }
-            1% {
-              opacity: 0;
-            }
-            2% {
-              opacity: 1;
-            }
-            12% {
-              opacity: 0.8;
-            }
-            16% {
-              opacity: 0.5;
-            }
-            20% {
-              opacity: 0.2;
-            }
-            22% {
-              opacity: 0;
-            }
-            24% {
-              opacity: 0;
-            }
-            25% {
-              opacity: 1;
-            }
-            31% {
-              opacity: 0.8;
-            }
-            35% {
-              opacity: 0.5;
-            }
-            39% {
-              opacity: 0.2;
-            }
-            41% {
-              opacity: 0;
-            }
-            43% {
-              opacity: 0;
-            }
-            44% {
-              opacity: 1;
-            }
-            50% {
-              opacity: 0.8;
-            }
-            54% {
-              opacity: 0.5;
-            }
-            58% {
-              opacity: 0.2;
-            }
-            60% {
-              opacity: 0;
-            }
-            62% {
-              opacity: 0;
-            }
-            63% {
-              opacity: 1;
-            }
-            69% {
-              opacity: 0.8;
-            }
-            73% {
-              opacity: 0.5;
-            }
-            77% {
-              opacity: 0.2;
-            }
-            79% {
-              opacity: 0;
-            }
-            81% {
-              opacity: 0;
-            }
-            82% {
-              opacity: 1;
-            }
-            88% {
-              opacity: 0.7;
-            }
-            92% {
-              opacity: 0.3;
-            }
-            96% {
-              opacity: 0;
-            }
-            100% {
-              opacity: 0;
-            }
-          }
-          .snowflake {
-            position: absolute;
-            top: -10px;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-shadow: 0 0 5px rgba(221, 221, 221, 0.89);
-            animation: snowfall-movement linear infinite, snowfall-opacity ease-in-out infinite;
-            pointer-events: none;
-            user-select: none;
-            z-index: 1;
-            opacity: 0;
-          }
-          .snowflake::before {
-            content: "❄";
-          }
-        `
-      }} />
     <div className="min-h-screen flex">
       {/* Левая часть - форма */}
       <div className="flex flex-col flex-1 lg:w-1/2 w-full">
@@ -365,30 +210,8 @@ export default function Auth() {
       <div className="lg:w-1/2 relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
         {/* <ThemeProvider> */}
           <div className="relative flex lg:flex-row w-full h-screen justify-center flex-col  dark:bg-gray-900 sm:p-0">
-            {/* Snowflakes container with overflow-hidden */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-              {snowflakes.map((snowflake) => {
-                // Calculate horizontal offset based on angle (tan(25°) ≈ 0.466)
-                // For 100vh drop, offset = 100vh * tan(angle)
-                const angleOffset = `${100 * Math.tan((snowflake.angle * Math.PI) / 180)}vh`;
-                return (
-                  <span
-                    key={snowflake.id}
-                    className="snowflake"
-                    style={{
-                      left: snowflake.left,
-                      animationDuration: snowflake.animationDuration,
-                      animationDelay: snowflake.animationDelay,
-                      fontSize: snowflake.fontSize,
-                      '--snow-drift': snowflake.drift,
-                      '--snow-angle-offset': angleOffset,
-                    } as React.CSSProperties & { '--snow-drift': string; '--snow-angle-offset': string }}
-                  />
-                );
-              })}
-            </div>
             {/* {children} */}
-            <div className="w-full h-full bg-brand-950 dark:bg-white/5 lg:grid items-center hidden relative z-10">
+            <div className="w-full h-full bg-brand-950 dark:bg-white/5 lg:grid items-center hidden">
               <div className="relative items-center justify-center  flex z-1">
                 {/* <!-- ===== Common Grid Shape Start ===== --> */}
                 <GridShape />
@@ -425,6 +248,5 @@ export default function Auth() {
         {/* </ThemeProvider> */}
       </div>
     </div>
-    </>
   );
 }
