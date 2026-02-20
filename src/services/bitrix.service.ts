@@ -356,10 +356,10 @@ ${data.description}
     return `
 Данные для отправки письма новому пользователю
 
-${data.email}
-${data.name}
-${data.login}
-${data.password}
+Почта получателя: ${data.email}
+Имя получателя: ${data.name}
+Логин: ${data.login}
+Пароль: ${data.password}
 
 Создано через веб-интерфейс ПЭК 3PL
     `.trim();
