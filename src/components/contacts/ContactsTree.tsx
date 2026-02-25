@@ -343,8 +343,19 @@ const contactsData: ContactItem = {
         position: "Директор службы развития",
         email: "belykh.vm@pecom.ru",
       },
-      subDepartmentsCount: 2,
+      subDepartmentsCount: 3,
       children: [
+        {
+          id: "sales-department",
+          name: "Отдел продаж",
+          type: "subdepartment",
+          leader: {
+            id: "koroleva-vv-sales",
+            name: "Королева Виктория Владимировна",
+            position: "Руководитель отдела, Отдел продаж",
+            email: "koroleva.vv@pecom.ru",
+          },
+        },
         {
           id: "customer-support",
           name: "Отдел сопровождения клиентов",
@@ -407,12 +418,12 @@ const contactsData: ContactItem = {
     },
     {
       id: "quality-control",
-      name: "Отдел контроля качества",
+      name: "Руководитель по качеству",
       type: "department",
       leader: {
         id: "pankov-sm",
         name: "Панков Сергей Михайлович",
-        position: "Руководитель отдела, Отдел контроля качества",
+        position: "Руководитель по качеству",
         email: "pankov.sm@pecom.ru",
       },
     },
