@@ -1,24 +1,22 @@
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import ContactsDirectoryTable from "@/components/contacts/ContactsDirectoryTable";
+import ContactsTree from "@/components/contacts/ContactsTree";
 import { Metadata } from "next";
-import React from "react";
 
 export const metadata: Metadata = {
-  title: "Контакты | ПЭК:3PL",
-  description: "Контакты ПЭК:3PL",
+  title: "Контакты (тест) | ПЭК:3PL",
+  description: "Тестовая страница контактов ПЭК:3PL",
 };
 
-export default function ContactsPage() {
+export default function AdminContactsTestPage() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Контакты" />
+      <PageBreadcrumb pageTitle="Контакты (тест)" />
       <div className="space-y-6">
         <ComponentCard title="Контакты">
-          <ContactsDirectoryTable />
+          <ContactsTree />
         </ComponentCard>
       </div>
     </div>
   );
 }
-
