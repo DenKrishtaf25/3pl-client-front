@@ -36,34 +36,34 @@ export default function ContactsDirectoryTable() {
           <tr className="bg-gray-100 dark:bg-gray-800/60">
             <th
               rowSpan={2}
-              className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left align-middle font-semibold"
+              className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left align-middle font-semibold"
             >
               ФИО
             </th>
             <th
               rowSpan={2}
-              className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left align-middle font-semibold"
+              className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left align-middle font-semibold"
             >
               Должность
             </th>
             <th
               colSpan={2}
-              className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-center align-middle font-semibold"
+              className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-center align-middle font-semibold"
             >
               Контактные данные
             </th>
             <th
               rowSpan={2}
-              className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left align-middle font-semibold"
+              className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left align-middle font-semibold"
             >
               Компетенции
             </th>
           </tr>
           <tr className="bg-gray-100 dark:bg-gray-800/60">
-            <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-semibold">
+            <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left font-semibold">
               телефон
             </th>
-            <th className="border border-gray-300 dark:border-gray-700 px-3 py-2 text-left font-semibold">
+            <th className="border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-left font-semibold">
               e-mail
             </th>
           </tr>
