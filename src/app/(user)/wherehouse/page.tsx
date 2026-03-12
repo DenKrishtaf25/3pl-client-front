@@ -16,7 +16,19 @@ export default function BasicTables() {
     <div>
       <PageBreadcrumb pageTitle="Склады" />
       <div className="space-y-6">
-        <ComponentCard title="10 складов 3PL">
+        <ComponentCard
+          title="10 складов 3PL"
+          action={
+            <a
+              href="https://pecom.ru/map/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600"
+            >
+              Все склады
+            </a>
+          }
+        >
           <Warehouse />
         </ComponentCard>
       </div>

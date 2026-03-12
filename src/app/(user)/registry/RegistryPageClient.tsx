@@ -128,15 +128,39 @@ export default function RegistryPageClient() {
           title="Реестр транспортных средств"
           action={
             <div className="flex items-center gap-4">
-              <div className="flex flex-col items-end gap-0.5 text-sm text-gray-600 dark:text-gray-400">
-                <span>Актуально на:</span>
-                {loadingMeta ? (
-                  <span className="text-gray-400 dark:text-gray-500">Загрузка...</span>
-                ) : (
-                  <span className="font-medium text-gray-800 dark:text-gray-200">
-                    {formatDateTime(lastImportAt)}
-                  </span>
-                )}
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col items-start gap-1 text-sm">
+                  <a
+                    href="/api/docs/blank"
+                    download
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline transition-colors"
+                  >
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-[3px] bg-blue-600 text-[9px] font-bold leading-none text-white">
+                      W
+                    </span>
+                    Пустой бланк доверенности
+                  </a>
+                  <a
+                    href="/api/docs/example"
+                    download
+                    className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline transition-colors"
+                  >
+                    <span className="inline-flex h-4 w-4 items-center justify-center rounded-[3px] bg-emerald-600 text-[9px] font-bold leading-none text-white">
+                      X
+                    </span>
+                    Пример заполненного бланка
+                  </a>
+                </div>
+                <div className="flex flex-col items-end gap-0.5 text-sm text-gray-600 dark:text-gray-400">
+                  <span>Актуально на:</span>
+                  {loadingMeta ? (
+                    <span className="text-gray-400 dark:text-gray-500">Загрузка...</span>
+                  ) : (
+                    <span className="font-medium text-gray-800 dark:text-gray-200">
+                      {formatDateTime(lastImportAt)}
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 onClick={handleRefresh}

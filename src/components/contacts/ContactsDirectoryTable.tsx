@@ -103,10 +103,10 @@ export default function ContactsDirectoryTable() {
             </td>
           </tr>
 
-          <tr className="bg-gray-50 dark:bg-gray-800/30">
+          <tr>
             <td
               colSpan={5}
-              className="border border-gray-300 dark:border-gray-700 px-3 py-3 text-center font-medium"
+              className="border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 px-3 py-3 text-center font-medium"
             >
               Менеджер по сопровождению клиентов
             </td>
