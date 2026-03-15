@@ -31,6 +31,8 @@ export default function FinancePageClient() {
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSuccess, setEmailSuccess] = useState(false);
+  const [showSubmissionNotice, setShowSubmissionNotice] = useState(false);
+  const submissionNoticeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [complaintData, setComplaintData] = useState({
     firstName: "",
@@ -70,6 +72,9 @@ export default function FinancePageClient() {
     return () => {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
+      }
+      if (submissionNoticeTimeoutRef.current) {
+        clearTimeout(submissionNoticeTimeoutRef.current);
       }
     };
   }, []);
@@ -209,6 +214,14 @@ export default function FinancePageClient() {
 
       await emailService.sendFinancialComplaint(complaintData, file ?? undefined);
       setEmailSuccess(true);
+      setShowSubmissionNotice(true);
+
+      if (submissionNoticeTimeoutRef.current) {
+        clearTimeout(submissionNoticeTimeoutRef.current);
+      }
+      submissionNoticeTimeoutRef.current = setTimeout(() => {
+        setShowSubmissionNotice(false);
+      }, 5000);
       
       // Скрыть сообщение об успехе через 5 секунд
       setTimeout(() => setEmailSuccess(false), 5000);
@@ -230,6 +243,13 @@ export default function FinancePageClient() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Финансовые претензии" />
+      {showSubmissionNotice && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-900/20">
+          <p className="text-sm text-green-800 dark:text-green-200">
+            Ваша претензия принята, после обработки, данные отобразятся в общем списке претензий
+          </p>
+        </div>
+      )}
       <div className="mb-6">
         <button
           onClick={() => {
